@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ระบบจดมาตรน้ำอัจฉริยะ — Demo (v2)</title>
+  <title>ระบบจดมาตรน้ำอัจฉริยะ — Demo (v3)</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
@@ -17,8 +17,10 @@
     .keypad-display { font-size: 2rem; letter-spacing: .06em; }
     .table-soft { background: #e9f4ff !important; }
     .measure-accent { font-weight: 700; color: #0d6efd; }
-    .qr-box { width: 100%; aspect-ratio: 3/2; background: #000; border-radius: 12px; overflow: hidden; position: relative; }
-    .qr-help { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff7; font-size:.95rem; }
+    .qr-wrap { width: 100%; }
+    .qr-box { width: 100%; height: 300px; background: #000; border-radius: 12px; overflow: hidden; position: relative; }
+    @media (min-width: 420px) {.qr-box { height: 340px; }}
+    .qr-help { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff7; font-size:.95rem; text-align:center; padding: 0 1rem;}
     .alert-fixed { position: fixed; left: .75rem; right: .75rem; bottom: .75rem; z-index: 1080; }
     .small-muted { color: #6c757d; }
   </style>
@@ -89,16 +91,21 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button>
         </div>
         <div class="modal-body">
-          <div id="qr-reader" class="qr-box">
-            <div class="qr-help">กำลังเตรียมกล้อง…</div>
-          </div>
-          <div id="scanErrorBox" class="alert alert-danger mt-3 d-none" role="alert">
-            <div class="d-flex align-items-start gap-2">
-              <i class="bi bi-exclamation-octagon fs-5"></i>
-              <div>
-                <div class="fw-bold">ไม่สามารถเปิดกล้องได้</div>
-                <div id="scanErrorMsg" class="small"></div>
+          <div class="qr-wrap">
+            <div id="qr-reader" class="qr-box">
+              <div class="qr-help">กำลังเตรียมกล้อง… หากไม่ขึ้น ให้กด “เริ่มสแกนใหม่”</div>
+            </div>
+            <div id="scanErrorBox" class="alert alert-danger mt-3 d-none" role="alert">
+              <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-exclamation-octagon fs-5"></i>
+                <div>
+                  <div class="fw-bold">ไม่สามารถเปิดกล้องได้</div>
+                  <div id="scanErrorMsg" class="small"></div>
+                </div>
               </div>
+            </div>
+            <div class="d-grid mt-2">
+              <button id="btnRestartScan" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-repeat me-1"></i> เริ่มสแกนใหม่</button>
             </div>
           </div>
 
@@ -218,6 +225,7 @@
     const manualMeterIdInput = document.getElementById('manualMeterId');
     const btnManualUse = document.getElementById('btnManualUse');
     const btnStopScan = document.getElementById('btnStopScan');
+    const btnRestartScan = document.getElementById('btnRestartScan');
     const toastArea = document.getElementById('toastArea');
     const scanErrorBox = document.getElementById('scanErrorBox');
     const scanErrorMsg = document.getElementById('scanErrorMsg');
@@ -232,20 +240,27 @@
       setTimeout(()=> { el.remove(); }, 5500);
     }
 
-    // Camera helpers
-    async function pickBackCamera() {
+    async function preflightPermission() {
+      // Prompt for camera permission once; immediately stop to free camera.
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        stream.getTracks().forEach(t => t.stop());
+        return true;
+      } catch (e) {
+        throw e;
+      }
+    }
+
+    async function enumerateCameras() {
       try {
         const devices = await Html5Qrcode.getCameras();
-        if (!devices || devices.length === 0) return null;
-        const back = devices.find(d => /back|rear|environment/i.test(d.label));
-        return back ? back.id : devices[0].id;
+        return devices || [];
       } catch (e) {
-        return null;
+        return [];
       }
     }
 
     function explainMediaError(err) {
-      // Map common getUserMedia errors to Thai explanations
       const name = err?.name || '';
       const msg = err?.message || String(err);
       let hint = '';
@@ -263,37 +278,70 @@
           hint = 'เบราว์เซอร์ไม่รองรับการใช้งานกล้องสำหรับบริบทนี้ ลองอัปเดตเบราว์เซอร์หรือเปลี่ยนเครื่องมือ'; break;
         default:
           hint = isSecure()
-            ? 'ลองรีเฟรชหน้าเว็บ หรือเปลี่ยนเบราว์เซอร์/อุปกรณ์'
+            ? 'ลองกด “เริ่มสแกนใหม่”, รีเฟรชหน้าเว็บ หรือเปลี่ยนเบราว์เซอร์/อุปกรณ์'
             : 'ต้องเปิดผ่าน HTTPS หรือ localhost เท่านั้น';
       }
       return { code: name || 'UnknownError', message: msg, hint };
     }
 
+    async function pickBackCameraId(list) {
+      if (!list || list.length === 0) return null;
+      const back = list.find(d => /back|rear|environment/i.test(d.label));
+      return back ? back.id : list[0].id;
+    }
+
     async function startScanner() {
       const qrRegion = document.getElementById('qr-reader');
+      qrRegion.style.height = (Math.max(280, Math.min(380, window.innerWidth * 0.7))) + 'px'; // ensure non-zero height
       qrRegion.innerHTML = '<div class="qr-help">กำลังเปิดกล้อง…</div>';
       scanErrorBox.classList.add('d-none');
       scanErrorMsg.textContent = '';
 
       if (!isSecure()) {
-        const { code, hint } = { code: 'InsecureContext', hint: 'ต้องเปิดผ่าน HTTPS หรือ localhost เพื่อใช้กล้องค่ะ' };
         scanErrorBox.classList.remove('d-none');
-        scanErrorMsg.innerHTML = `<b>Code:</b> ${code} — ${hint}`;
+        scanErrorMsg.innerHTML = `<b>Code:</b> InsecureContext<br><b>Hint:</b> ต้องเปิดผ่าน HTTPS หรือ localhost เพื่อใช้กล้องค่ะ`;
         return;
       }
 
       try {
-        if (!preferredCameraId) preferredCameraId = await pickBackCamera();
-        html5QrCode = new Html5Qrcode("qr-reader", { verbose: false });
-        isScanning = true;
+        // 1) Preflight permission (helps iOS Safari & some Android)
+        await preflightPermission();
+        // 2) Enumerate & choose camera
+        const cams = await enumerateCameras();
+        preferredCameraId = await pickBackCameraId(cams);
+
+        // 3) Init scanner
+        if (!html5QrCode) html5QrCode = new Html5Qrcode("qr-reader", { verbose: false });
+
+        // 4) Try with deviceId first, then fallback to facingMode
         const config = { fps: 10, qrbox: { width: 240, height: 240 } };
-        const camConfig = preferredCameraId ? { deviceId: { exact: preferredCameraId } } : { facingMode: "environment" };
-        await html5QrCode.start(camConfig, config, onScanSuccess, onScanError);
+        let startOk = false;
+        try {
+          if (preferredCameraId) {
+            await html5QrCode.start({ deviceId: { exact: preferredCameraId } }, config, onScanSuccess, onScanError);
+            startOk = true;
+          }
+        } catch (e1) {
+          // fallback
+          try {
+            await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
+            startOk = true;
+          } catch (e2) {
+            // last resort: any camera
+            const anyId = cams[0]?.id;
+            if (anyId) {
+              await html5QrCode.start({ deviceId: { exact: anyId } }, config, onScanSuccess, onScanError);
+              startOk = true;
+            } else {
+              throw e2;
+            }
+          }
+        }
+        isScanning = startOk;
       } catch (err) {
         const { code, message, hint } = explainMediaError(err);
         scanErrorBox.classList.remove('d-none');
         scanErrorMsg.innerHTML = `<b>Code:</b> ${code}<br><b>Message:</b> ${message}<br><b>Hint:</b> ${hint}`;
-        toast('ไม่สามารถเปิดกล้องได้ (' + (code || 'Error') + ')', 'danger');
       }
     }
 
@@ -315,10 +363,9 @@
       }
     }
     function onScanError(err) {
-      // keep scanner alive; optionally log errors
+      // No-op: keep scanning
     }
 
-    // Fill tables
     function fillInfoTable() {
       if (!meterId) return;
       const now = new Date();
@@ -346,7 +393,6 @@
       usageCard.classList.remove('d-none');
     }
 
-    // Keypad
     function appendDigit(d) {
       const cur = keypadInput.value || "";
       keypadInput.value = (cur === "0") ? String(d) : (cur + String(d));
@@ -385,6 +431,10 @@
       scanModal.show();
     });
     btnStopScan.addEventListener('click', () => stopScanner());
+    btnRestartScan.addEventListener('click', async () => {
+      await stopScanner();
+      await startScanner();
+    });
     btnManualUse.addEventListener('click', () => {
       const onlyDigits = manualMeterIdInput.value.replace(/\D/g, "");
       if (onlyDigits.length !== 11) { alert('กรุณาป้อนหมายเลข 11 หลัก'); return; }
@@ -398,6 +448,7 @@
       }
     });
 
+    // Modal lifecycle
     scanModalEl.addEventListener('shown.bs.modal', () => { startScanner(); });
     scanModalEl.addEventListener('hidden.bs.modal', () => { stopScanner(); });
 
