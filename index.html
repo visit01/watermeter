@@ -1,389 +1,409 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจดมาตรน้ำอัจฉริยะ</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: #f0f2f5;
-        }
-        .main-container {
-            max-width: 600px;
-            margin: auto;
-        }
-        .header {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            padding: 20px;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .header h3 {
-            margin: 0;
-            font-weight: 700;
-        }
-        .btn-scan {
-            font-size: 1.2rem;
-            padding: 15px 0;
-            font-weight: 700;
-            border-radius: 15px;
-        }
-        #qr-reader {
-            width: 100%;
-            border-radius: 15px;
-            overflow: hidden;
-            display: none;
-            margin-top: 1rem;
-            border: 5px solid #007bff;
-        }
-        .info-card {
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            margin-top: 1rem;
-        }
-        .table-custom {
-            margin-bottom: 0;
-        }
-        .table-custom td:first-child {
-            font-weight: 700;
-            width: 45%;
-        }
-        .result-table {
-            background-color: #e0f7ff; /* สีฟ้าอ่อน */
-        }
-        .result-table .unit-used {
-            font-weight: bold;
-            color: #0056b3; /* สีน้ำเงิน */
-        }
-        /* Calculator Modal */
-        .modal-body-calculator {
-            padding: 0;
-        }
-        #calculator-display {
-            background-color: #f8f9fa;
-            border: none;
-            font-size: 3.5rem;
-            font-weight: bold;
-            text-align: right;
-            padding: 20px;
-            letter-spacing: 2px;
-            border-top-left-radius: 0.3rem;
-            border-top-right-radius: 0.3rem;
-        }
-        .calculator-keys {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1px;
-            background-color: #ccc;
-        }
-        .calculator-keys button {
-            font-size: 2rem;
-            padding: 25px 0;
-            border: none;
-            background-color: #fff;
-            color: #333;
-            transition: background-color 0.2s;
-        }
-        .calculator-keys button:active {
-            background-color: #ddd;
-        }
-        .btn-record {
-            font-size: 1.5rem;
-            padding: 25px 0;
-            grid-column: span 3;
-            background-color: #28a745;
-            color: white;
-            font-weight: bold;
-        }
-        .btn-record:active {
-            background-color: #218838;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ระบบจดมาตรน้ำอัจฉริยะ — Demo (v2)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
+  <style>
+    body { background: #f7fbff; }
+    .app-header { background: linear-gradient(135deg, #0d6efd 0%, #5aa9ff 100%); color: white; }
+    .logo-badge { width: 44px; height: 44px; border-radius: 12px; background: #ffffff22; display: grid; place-items: center; border: 1px solid #ffffff55; }
+    .logo-badge svg { width: 26px; height: 26px; }
+    .card-lift { border-radius: 16px; box-shadow: 0 10px 24px rgba(13,110,253,.08); }
+    .keypad-btn { font-size: 1.4rem; padding: .9rem 0; }
+    .keypad-display { font-size: 2rem; letter-spacing: .06em; }
+    .table-soft { background: #e9f4ff !important; }
+    .measure-accent { font-weight: 700; color: #0d6efd; }
+    .qr-box { width: 100%; aspect-ratio: 3/2; background: #000; border-radius: 12px; overflow: hidden; position: relative; }
+    .qr-help { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff7; font-size:.95rem; }
+    .alert-fixed { position: fixed; left: .75rem; right: .75rem; bottom: .75rem; z-index: 1080; }
+    .small-muted { color: #6c757d; }
+  </style>
 </head>
 <body>
-    <div class="main-container p-3">
-        <!-- Header -->
-        <div class="header d-flex align-items-center justify-content-center">
-             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-droplet-half me-3" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M7.21.8C7.69.295 8.31.025 9 .025c.69 0 1.31.27 1.79.8C11.97 2.45 13 3.817 13 5.5a5 5 0 0 1-10 0c0-1.683 1.03-3.05 2.21-4.7zM8 1V.025A7.001 7.001 0 0 0 1 5.5c0 3.182 2.166 5.824 5 6.89V1z"/>
-            </svg>
-            <h3>ระบบจดมาตรน้ำอัจฉริยะ</h3>
+  <header class="app-header py-3 px-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="logo-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2C12 2 5 10 5 14.5C5 18.09 8.134 21 12 21C15.866 21 19 18.09 19 14.5C19 10 12 2 12 2Z"/>
+          <path d="M9 15c0 1.657 1.343 3 3 3"/>
+        </svg>
+      </div>
+      <div>
+        <div class="small opacity-75">Demo</div>
+        <h1 class="h5 mb-0">ระบบจดมาตรน้ำอัจฉริยะ</h1>
+      </div>
+      <div class="ms-auto"><span class="badge text-bg-light text-primary rounded-pill">Mobile</span></div>
+    </div>
+  </header>
+
+  <main class="container py-3">
+    <div class="card card-lift border-0 mb-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <p class="mb-0 text-secondary">สแกน QR เพื่อเริ่ม (11 หลัก)</p>
+          <button id="btnScan" class="btn btn-primary btn-sm">
+            <i class="bi bi-qr-code-scan me-1"></i> ผู้ใช้น้ำ
+          </button>
         </div>
-
-        <!-- Scan Button and QR Reader -->
-        <div class="mt-4">
-            <button id="btn-scan" class="btn btn-primary w-100 btn-scan">
-                <i class="bi bi-qr-code-scan me-2"></i> ผู้ใช้น้ำ
-            </button>
-        </div>
-        <div id="qr-reader"></div>
-
-        <!-- Information Tables (hidden initially) -->
-        <div id="info-section" class="d-none">
-            <div class="card info-card mt-4">
-                <div class="card-body p-0">
-                    <table class="table table-custom table-striped">
-                        <tbody>
-                            <tr><td>หมายเลขมิเตอร์น้ำ</td><td id="meter-id"></td></tr>
-                            <tr><td>ผู้ใช้น้ำ</td><td id="user-name"></td></tr>
-                            <tr><td>ที่อยู่</td><td id="user-address"></td></tr>
-                            <tr><td>วันที่จดครั้งก่อน</td><td id="prev-date"></td></tr>
-                            <tr><td>เลขครั้งก่อน</td><td id="prev-reading"></td></tr>
-                            <tr><td>ผู้จดมิเตอร์</td><td id="recorder-name"></td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card info-card mt-3 result-table">
-                 <div class="card-body p-0">
-                    <table class="table table-custom">
-                        <tbody>
-                            <tr><td>วันที่จดวันนี้</td><td id="current-date"></td></tr>
-                            <tr><td>เลขวันนี้</td><td id="current-reading"></td></tr>
-                            <tr><td class="unit-used">หน่วยใช้น้ำ</td><td id="unit-used" class="unit-used"></td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div class="mt-3">
-                 <button id="btn-open-calculator" class="btn btn-success w-100 btn-scan">
-                    <i class="bi bi-pencil-square me-2"></i> บันทึกเลขมิเตอร์น้ำ
-                </button>
-            </div>
-        </div>
-
+      </div>
     </div>
 
-    <!-- Calculator Modal -->
-    <div class="modal fade" id="calculatorModal" tabindex="-1" aria-labelledby="calculatorModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content">
-                <div class="modal-body modal-body-calculator">
-                    <input type="text" id="calculator-display" class="form-control" readonly placeholder="0">
-                    <div class="calculator-keys">
-                        <button type="button" class="btn-num">1</button>
-                        <button type="button" class="btn-num">2</button>
-                        <button type="button" class="btn-num">3</button>
-                        <button type="button" class="btn-num">4</button>
-                        <button type="button" class="btn-num">5</button>
-                        <button type="button" class="btn-num">6</button>
-                        <button type="button" class="btn-num">7</button>
-                        <button type="button" class="btn-num">8</button>
-                        <button type="button" class="btn-num">9</button>
-                        <button type="button" id="btn-clear">C</button>
-                        <button type="button" class="btn-num">0</button>
-                        <button type="button" id="btn-backspace"><i class="bi bi-backspace"></i></button>
-                        <button type="button" id="btn-record-submit" class="btn-record">RECORD</button>
-                    </div>
-                </div>
-            </div>
+    <div id="infoCard" class="card card-lift border-0 mb-3 d-none">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between">
+          <h2 class="h6 mb-0"><i class="bi bi-person-vcard me-2"></i>ข้อมูลผู้ใช้น้ำ</h2>
+          <button id="btnOpenRecord" class="btn btn-success btn-sm">
+            <i class="bi bi-pencil-square me-1"></i> บันทึกเลขมิเตอร์น้ำ
+          </button>
         </div>
-    </div>
-    
-    <!-- Confirmation Modal -->
-    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="confirmModalLabel">ยืนยันการบันทึก</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    คุณต้องการยืนยันการบันทึกข้อมูลใช่หรือไม่?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="btn-confirm-cancel">ยกเลิก</button>
-                    <button type="button" class="btn btn-primary" id="btn-confirm-ok">ตกลง</button>
-                </div>
-            </div>
+        <div class="table-responsive mt-3">
+          <table class="table table-soft table-bordered align-middle">
+            <tbody id="infoTableBody"></tbody>
+          </table>
         </div>
-    </div>
-    
-    <!-- Alert Modal -->
-    <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="alertModalLabel">ข้อผิดพลาด</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="alertModalBody">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">ตกลง</button>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
+    <div id="usageCard" class="card card-lift border-0 d-none">
+      <div class="card-body">
+        <h2 class="h6 mb-3"><i class="bi bi-droplet-half me-2"></i>ผลการบันทึกวันนี้</h2>
+        <div class="table-responsive">
+          <table class="table table-soft table-bordered align-middle">
+            <tbody id="usageTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
 
-    <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- QR Code Scanner Library -->
-    <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+  <!-- Scan Modal -->
+  <div class="modal fade" id="scanModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-camera-video me-2"></i>สแกน QR ผู้ใช้น้ำ</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button>
+        </div>
+        <div class="modal-body">
+          <div id="qr-reader" class="qr-box">
+            <div class="qr-help">กำลังเตรียมกล้อง…</div>
+          </div>
+          <div id="scanErrorBox" class="alert alert-danger mt-3 d-none" role="alert">
+            <div class="d-flex align-items-start gap-2">
+              <i class="bi bi-exclamation-octagon fs-5"></i>
+              <div>
+                <div class="fw-bold">ไม่สามารถเปิดกล้องได้</div>
+                <div id="scanErrorMsg" class="small"></div>
+              </div>
+            </div>
+          </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // State variables
-            let scannedMeterId = null;
-            const PREVIOUS_READING = 1562;
+          <div class="input-group mt-3">
+            <span class="input-group-text"><i class="bi bi-hash"></i></span>
+            <input id="manualMeterId" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="11" class="form-control" placeholder="ป้อนหมายเลขมิเตอร์ (11 หลัก)">
+            <button id="btnManualUse" class="btn btn-outline-primary">ใช้ค่านี้</button>
+          </div>
+          <div class="form-text mt-2 small-muted">
+            หากกล้องไม่ทำงาน: ต้องเปิดผ่าน <b>HTTPS</b> หรือ <b>localhost</b> และอนุญาตสิทธิ์กล้องในเบราว์เซอร์
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btnStopScan" type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            // DOM Elements
-            const btnScan = document.getElementById('btn-scan');
-            const qrReaderDiv = document.getElementById('qr-reader');
-            const infoSection = document.getElementById('info-section');
-            const btnOpenCalculator = document.getElementById('btn-open-calculator');
-            const calculatorDisplay = document.getElementById('calculator-display');
+  <!-- Record Modal -->
+  <div class="modal fade" id="recordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-calculator me-2"></i>บันทึกเลขมิเตอร์น้ำ</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-floating">
+            <input id="keypadInput" type="text" class="form-control keypad-display" placeholder="0" inputmode="numeric" readonly>
+            <label for="keypadInput">เลขมิเตอร์น้ำวันนี้</label>
+          </div>
+          <div class="row g-2 mt-3">
+            <div class="col-4"><button class="btn btn-light w-100 keypad-btn" data-key="1">1</button></div>
+            <div class="col-4"><button class="btn btn-light w-100 keypad-btn" data-key="2">2</button></div>
+            <div class="col-4"><button class="btn btn-light w-100 keypad-btn" data-key="3">3</button></div>
+            <div class="col-4"><button class="btn btn-light w-100 keypad-btn" data-key="4">4</button></div>
+            <div class="col-4"><button class="btn btn-light w-100 keypad-btn" data-key="5">5</button></div>
+            <div class="col-4"><button class="btn btn-light w-100 keypad-btn" data-key="6">6</button></div>
+            <div class="col-4"><button class="btn btn-light w-100 keypad-btn" data-key="7">7</button></div>
+            <div class="col-4"><button class="btn btn-light w-100 keypad-btn" data-key="8">8</button></div>
+            <div class="col-4"><button class="btn btn-light w-100 keypad-btn" data-key="9">9</button></div>
+            <div class="col-4"><button class="btn btn-outline-danger w-100 keypad-btn" data-action="clear"><i class="bi bi-x-circle"></i></button></div>
+            <div class="col-4"><button class="btn btn-light w-100 keypad-btn" data-key="0">0</button></div>
+            <div class="col-4"><button class="btn btn-outline-secondary w-100 keypad-btn" data-action="back"><i class="bi bi-backspace"></i></button></div>
+          </div>
+        </div>
+        <div class="modal-footer d-grid gap-2">
+          <button id="btnRecord" class="btn btn-primary btn-lg"><i class="bi bi-check2-circle me-1"></i> RECORD</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            // Modals
-            const calculatorModal = new bootstrap.Modal(document.getElementById('calculatorModal'));
-            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
-            const alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
+  <!-- Confirm Modal -->
+  <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-question-circle me-2"></i>ยืนยันการบันทึก</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button>
+        </div>
+        <div class="modal-body">ต้องการบันทึกเลขมิเตอร์น้ำนี้ใช่หรือไม่?</div>
+        <div class="modal-footer">
+          <button id="btnCancelConfirm" type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+          <button id="btnOkConfirm" type="button" class="btn btn-primary">ตกลง</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            let html5QrCode;
+  <div id="toastArea" class="alert-fixed"></div>
 
-            // Helper function to format date
-            const formatDateTime = (date) => {
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = String(date.getFullYear()).slice(-2);
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${day}/${month}/${year} ${hours}:${minutes}`;
-            };
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Utils
+    const formatDate = (d) => {
+      const pad = (n)=> String(n).padStart(2, '0');
+      const dd = pad(d.getDate());
+      const mm = pad(d.getMonth()+1);
+      const yy = String(d.getFullYear()).slice(-2);
+      const hh = pad(d.getHours());
+      const min = pad(d.getMinutes());
+      return `${dd}/${mm}/${yy} ${hh}:${min}`;
+    };
+    const addHours = (date, h) => new Date(date.getTime() + h*3600*1000);
+    const monthAgoSameDay = (date) => {
+      const d = new Date(date);
+      const m = d.getMonth();
+      d.setMonth(m - 1);
+      if (d.getMonth() === m) d.setDate(0);
+      return d;
+    };
+    const isSecure = () => location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
-            // QR Code Success Callback
-            const onScanSuccess = (decodedText, decodedResult) => {
-                console.log(`Scan result: ${decodedText}`, decodedResult);
-                
-                // Stop scanning
-                html5QrCode.stop().then(() => {
-                    qrReaderDiv.style.display = 'none';
-                    btnScan.style.display = 'block';
-                    console.log("QR Code scanning stopped.");
-                }).catch(err => {
-                    console.error("Failed to stop QR Code scanning.", err);
-                });
-                
-                // Validate if it's an 11-digit number
-                if (/^\d{11}$/.test(decodedText)) {
-                    scannedMeterId = decodedText;
-                    updateInitialInfo(scannedMeterId);
-                    infoSection.classList.remove('d-none');
-                } else {
-                    showCustomAlert("QR Code ไม่ถูกต้อง ต้องเป็นหมายเลข 11 หลักเท่านั้น");
-                }
-            };
+    // State
+    let meterId = null;
+    const PREV_READING = 1562;
+    let html5QrCode = null;
+    let isScanning = false;
+    let preferredCameraId = null;
 
-            // QR Code Error Callback
-            const onScanError = (errorMessage) => {
-                // handle scan error, usually ignore it.
-                // console.warn(`Code scan error = ${errorMessage}`);
-            };
+    // Elements
+    const infoCard = document.getElementById('infoCard');
+    const infoTableBody = document.getElementById('infoTableBody');
+    const usageCard = document.getElementById('usageCard');
+    const usageTableBody = document.getElementById('usageTableBody');
+    const scanModalEl = document.getElementById('scanModal');
+    const scanModal = new bootstrap.Modal(scanModalEl);
+    const recordModalEl = document.getElementById('recordModal');
+    const recordModal = new bootstrap.Modal(recordModalEl);
+    const confirmModalEl = document.getElementById('confirmModal');
+    const confirmModal = new bootstrap.Modal(confirmModalEl);
+    const btnScan = document.getElementById('btnScan');
+    const btnOpenRecord = document.getElementById('btnOpenRecord');
+    const keypadInput = document.getElementById('keypadInput');
+    const manualMeterIdInput = document.getElementById('manualMeterId');
+    const btnManualUse = document.getElementById('btnManualUse');
+    const btnStopScan = document.getElementById('btnStopScan');
+    const toastArea = document.getElementById('toastArea');
+    const scanErrorBox = document.getElementById('scanErrorBox');
+    const scanErrorMsg = document.getElementById('scanErrorMsg');
 
-            // Update UI with initial data after scan
-            const updateInitialInfo = (meterId) => {
-                const now = new Date();
-                const lastMonth = new Date(now.setMonth(now.getMonth() - 1));
-                lastMonth.setHours(lastMonth.getHours() + 2);
+    function toast(msg, type='warning') {
+      const id = 't'+Date.now();
+      const el = document.createElement('div');
+      el.id = id;
+      el.className = `alert alert-${type}`;
+      el.innerHTML = `<div class="d-flex align-items-center"><i class="bi ${type==='danger'?'bi-exclamation-octagon':'bi-info-circle'} me-2"></i>${msg}</div>`;
+      toastArea.appendChild(el);
+      setTimeout(()=> { el.remove(); }, 5500);
+    }
 
-                document.getElementById('meter-id').textContent = meterId;
-                document.getElementById('user-name').textContent = 'อ.ทอง หลอมประโคน';
-                document.getElementById('user-address').textContent = '193/8 หมู่ที่ 9 ตำบลเสม็ด อำเภอเมืองบุรีรัมย์ จ.บุรีรัมย์ 31000';
-                document.getElementById('prev-date').textContent = formatDateTime(lastMonth);
-                document.getElementById('prev-reading').textContent = PREVIOUS_READING;
-                document.getElementById('recorder-name').textContent = 'นางสาว พรทิพย์ รุ่งเรืองดี';
-            };
+    // Camera helpers
+    async function pickBackCamera() {
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        if (!devices || devices.length === 0) return null;
+        const back = devices.find(d => /back|rear|environment/i.test(d.label));
+        return back ? back.id : devices[0].id;
+      } catch (e) {
+        return null;
+      }
+    }
 
-            // Update UI with final recorded data
-            const updateFinalInfo = (newReading) => {
-                const unitsUsed = newReading - PREVIOUS_READING;
-                document.getElementById('current-date').textContent = formatDateTime(new Date());
-                document.getElementById('current-reading').textContent = newReading;
-                document.getElementById('unit-used').textContent = unitsUsed;
-            };
+    function explainMediaError(err) {
+      // Map common getUserMedia errors to Thai explanations
+      const name = err?.name || '';
+      const msg = err?.message || String(err);
+      let hint = '';
+      switch (name) {
+        case 'NotAllowedError':
+        case 'SecurityError':
+          hint = 'ไม่ได้รับอนุญาตให้ใช้กล้อง กรุณาอนุญาตการเข้าถึงกล้องในเบราว์เซอร์/ระบบ แล้วรีเฟรชหน้าเว็บ'; break;
+        case 'NotFoundError':
+          hint = 'ไม่พบอุปกรณ์กล้อง กรุณาเชื่อมต่อกล้อง หรือใช้มือถือที่มีกล้อง'; break;
+        case 'NotReadableError':
+          hint = 'ไม่สามารถเข้าถึงกล้อง อาจถูกใช้งานโดยแอปอื่นอยู่ ปิดแอปที่ใช้กล้องแล้วลองใหม่'; break;
+        case 'OverconstrainedError':
+          hint = 'ข้อกำหนดกล้องไม่ตรงกับอุปกรณ์ ลองสลับไปใช้กล้องตัวอื่น'; break;
+        case 'NotSupportedError':
+          hint = 'เบราว์เซอร์ไม่รองรับการใช้งานกล้องสำหรับบริบทนี้ ลองอัปเดตเบราว์เซอร์หรือเปลี่ยนเครื่องมือ'; break;
+        default:
+          hint = isSecure()
+            ? 'ลองรีเฟรชหน้าเว็บ หรือเปลี่ยนเบราว์เซอร์/อุปกรณ์'
+            : 'ต้องเปิดผ่าน HTTPS หรือ localhost เท่านั้น';
+      }
+      return { code: name || 'UnknownError', message: msg, hint };
+    }
 
-            // Start QR Scanner
-            btnScan.addEventListener('click', () => {
-                qrReaderDiv.style.display = 'block';
-                btnScan.style.display = 'none';
-                
-                html5QrCode = new Html5Qrcode("qr-reader");
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
-            });
-            
-            // Show custom alert
-            const showCustomAlert = (message) => {
-                document.getElementById('alertModalBody').textContent = message;
-                alertModal.show();
-            };
+    async function startScanner() {
+      const qrRegion = document.getElementById('qr-reader');
+      qrRegion.innerHTML = '<div class="qr-help">กำลังเปิดกล้อง…</div>';
+      scanErrorBox.classList.add('d-none');
+      scanErrorMsg.textContent = '';
 
-            // Calculator logic
-            btnOpenCalculator.addEventListener('click', () => {
-                calculatorDisplay.value = '';
-                calculatorModal.show();
-            });
+      if (!isSecure()) {
+        const { code, hint } = { code: 'InsecureContext', hint: 'ต้องเปิดผ่าน HTTPS หรือ localhost เพื่อใช้กล้องค่ะ' };
+        scanErrorBox.classList.remove('d-none');
+        scanErrorMsg.innerHTML = `<b>Code:</b> ${code} — ${hint}`;
+        return;
+      }
 
-            document.querySelectorAll('.btn-num').forEach(button => {
-                button.addEventListener('click', () => {
-                    calculatorDisplay.value += button.textContent;
-                });
-            });
+      try {
+        if (!preferredCameraId) preferredCameraId = await pickBackCamera();
+        html5QrCode = new Html5Qrcode("qr-reader", { verbose: false });
+        isScanning = true;
+        const config = { fps: 10, qrbox: { width: 240, height: 240 } };
+        const camConfig = preferredCameraId ? { deviceId: { exact: preferredCameraId } } : { facingMode: "environment" };
+        await html5QrCode.start(camConfig, config, onScanSuccess, onScanError);
+      } catch (err) {
+        const { code, message, hint } = explainMediaError(err);
+        scanErrorBox.classList.remove('d-none');
+        scanErrorMsg.innerHTML = `<b>Code:</b> ${code}<br><b>Message:</b> ${message}<br><b>Hint:</b> ${hint}`;
+        toast('ไม่สามารถเปิดกล้องได้ (' + (code || 'Error') + ')', 'danger');
+      }
+    }
 
-            document.getElementById('btn-clear').addEventListener('click', () => {
-                calculatorDisplay.value = '';
-            });
-            
-             document.getElementById('btn-backspace').addEventListener('click', () => {
-                calculatorDisplay.value = calculatorDisplay.value.slice(0, -1);
-            });
+    async function stopScanner() {
+      if (html5QrCode && isScanning) {
+        try { await html5QrCode.stop(); } catch {}
+        try { await html5QrCode.clear(); } catch {}
+      }
+      isScanning = false;
+    }
 
-            document.getElementById('btn-record-submit').addEventListener('click', () => {
-                const newReading = parseInt(calculatorDisplay.value, 10);
+    function onScanSuccess(decodedText) {
+      const onlyDigits = decodedText.replace(/\D/g, "");
+      if (onlyDigits.length === 11) {
+        meterId = onlyDigits;
+        stopScanner();
+        bootstrap.Modal.getInstance(scanModalEl)?.hide();
+        fillInfoTable();
+      }
+    }
+    function onScanError(err) {
+      // keep scanner alive; optionally log errors
+    }
 
-                if (isNaN(newReading) || calculatorDisplay.value === '') {
-                    showCustomAlert('กรุณาป้อนตัวเลข');
-                    return;
-                }
-                
-                const unitsUsed = newReading - PREVIOUS_READING;
+    // Fill tables
+    function fillInfoTable() {
+      if (!meterId) return;
+      const now = new Date();
+      const prev = addHours(monthAgoSameDay(now), 2);
+      infoTableBody.innerHTML = `
+        <tr><th class="w-50">หมายเลขมิเตอร์น้ำ</th><td>${meterId}</td></tr>
+        <tr><th>ผู้ใช้น้ำ</th><td>อ.ทอง หลอมประโคน</td></tr>
+        <tr><th>ที่อยู่</th><td>193/8 หมู่ที่ 9 ตำบลเสม็ด อำเภอเมืองบุรีรัมย์ จ.บุรีรัมย์ 31000</td></tr>
+        <tr><th>วันที่จดมิเตอร์น้ำก่อนหน้า</th><td>${formatDate(prev)}</td></tr>
+        <tr><th>เลขมิเตอร์น้ำก่อนหน้า</th><td>${PREV_READING}</td></tr>
+        <tr><th>ผู้จดมิเตอร์น้ำ</th><td>นางสาว พรทิพย์ รุ่งเรืองดี</td></tr>
+      `;
+      infoCard.classList.remove('d-none');
+      usageCard.classList.add('d-none');
+    }
 
-                if (unitsUsed < 50) {
-                    showCustomAlert('กรุณาเช็คข้อมูลอีกครั้ง!');
-                    return;
-                }
+    function fillUsageTable(currentReading) {
+      const now = new Date();
+      const used = currentReading - PREV_READING;
+      usageTableBody.innerHTML = `
+        <tr><th class="w-50">วันที่จดมิเตอร์น้ำ</th><td>${formatDate(now)}</td></tr>
+        <tr><th>เลขมิเตอร์น้ำวันนี้</th><td>${currentReading}</td></tr>
+        <tr><th class="measure-accent">หน่วยใช้น้ำ</th><td class="measure-accent">${used}</td></tr>
+      `;
+      usageCard.classList.remove('d-none');
+    }
 
-                confirmModal.show();
-            });
-            
-            // Confirmation logic
-            document.getElementById('btn-confirm-cancel').addEventListener('click', () => {
-                confirmModal.hide();
-                calculatorDisplay.value = ''; // ล้างค่าใน input
-            });
+    // Keypad
+    function appendDigit(d) {
+      const cur = keypadInput.value || "";
+      keypadInput.value = (cur === "0") ? String(d) : (cur + String(d));
+    }
+    function clearInput() { keypadInput.value = ""; }
+    function backspace() { keypadInput.value = (keypadInput.value || "").slice(0, -1); }
 
-            document.getElementById('btn-confirm-ok').addEventListener('click', () => {
-                const newReading = parseInt(calculatorDisplay.value, 10);
-                updateFinalInfo(newReading);
-                confirmModal.hide();
-                calculatorModal.hide();
-            });
-        });
-    </script>
+    document.querySelectorAll('.keypad-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.key;
+        const action = btn.dataset.action;
+        if (key) appendDigit(key);
+        else if (action === 'clear') clearInput();
+        else if (action === 'back') backspace();
+      });
+    });
+
+    document.getElementById('btnRecord').addEventListener('click', () => {
+      const v = parseInt(keypadInput.value, 10);
+      if (isNaN(v)) { alert('กรุณาป้อนเลขมิเตอร์น้ำ'); return; }
+      const diff = v - PREV_READING;
+      if (diff < 50) { alert('กรุณาเช็คข้อมูลอีกครั้ง!'); return; }
+      confirmModal.show();
+    });
+    document.getElementById('btnCancelConfirm').addEventListener('click', clearInput);
+    document.getElementById('btnOkConfirm').addEventListener('click', () => {
+      const v = parseInt(keypadInput.value, 10);
+      confirmModal.hide();
+      recordModal.hide();
+      if (!isNaN(v)) fillUsageTable(v);
+    });
+
+    // Openers
+    btnScan.addEventListener('click', async () => {
+      manualMeterIdInput.value = "";
+      scanModal.show();
+    });
+    btnStopScan.addEventListener('click', () => stopScanner());
+    btnManualUse.addEventListener('click', () => {
+      const onlyDigits = manualMeterIdInput.value.replace(/\D/g, "");
+      if (onlyDigits.length !== 11) { alert('กรุณาป้อนหมายเลข 11 หลัก'); return; }
+      meterId = onlyDigits;
+      stopScanner(); scanModal.hide(); fillInfoTable();
+    });
+    document.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'btnOpenRecord') {
+        if (!meterId) { alert('กรุณาสแกนผู้ใช้น้ำก่อน'); return; }
+        clearInput(); recordModal.show();
+      }
+    });
+
+    scanModalEl.addEventListener('shown.bs.modal', () => { startScanner(); });
+    scanModalEl.addEventListener('hidden.bs.modal', () => { stopScanner(); });
+
+    // Initial hide
+    infoCard.classList.add('d-none');
+    usageCard.classList.add('d-none');
+  </script>
 </body>
 </html>
