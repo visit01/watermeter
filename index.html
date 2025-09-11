@@ -166,23 +166,17 @@
     </div>
   </div>
 
-  <!-- Bootstrap 5 JS (must load BEFORE custom script) -->
+  <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
   <!-- Custom Script -->
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      // Guard: ensure Bootstrap loaded
-      if (!window.bootstrap) {
-        alert('Bootstrap ยังไม่ถูกโหลด กรุณาเชื่อมต่ออินเทอร์เน็ตและรีเฟรชหน้า');
-        return;
-      }
+      if (!window.bootstrap) { alert('Bootstrap ยังไม่ถูกโหลด กรุณาเชื่อมต่ออินเทอร์เน็ตและรีเฟรชหน้า'); return; }
 
-      // Constants
       const PREV_READING = 1562;
       const READER_NAME = "นางสาว พรทิพย์ สว่างดี";
 
-      // Elements
       const meterNoEl = document.getElementById('meterNo');
       const prevDateEl = document.getElementById('prevDate');
       const prevReadingEl = document.getElementById('prevReading');
@@ -208,7 +202,7 @@
       const btnManualSet = document.getElementById('btnManualSet');
 
       let html5QrCode = null;
-      let scannedMeter = null; // 11-digit string
+      let scannedMeter = null;
 
       function pad2(n){ return n.toString().padStart(2,'0'); }
       function formatNow(offsetMonth=0){
@@ -228,7 +222,7 @@
         meterNoEl.textContent = scannedMeter;
         prevDateEl.textContent = formatNow(-1);
         prevReadingEl.textContent = PREV_READING.toString();
-        readerNameEl.textContent = READER_NAME;
+        readerNameEl.textContent = READER_NAME;  // show name ONLY after scan
         statusBadge.className = "badge ms-auto bg-success";
         statusBadge.textContent = "พร้อมบันทึก";
       }
@@ -240,29 +234,16 @@
         usageEl.textContent = usage.toString();
       }
 
-      // QR Handlers
       btnScan.addEventListener('click', async () => {
-        // Open modal immediately
         qrModal.show();
-
-        // Delay to render modal content before starting camera
         setTimeout(async () => {
           try {
-            if (!window.Html5Qrcode) {
-              console.warn("html5-qrcode not loaded yet. Use manual input.");
-              return;
-            }
-            if (!html5QrCode) {
-              html5QrCode = new Html5Qrcode("qrReader");
-            } else {
-              try { await html5QrCode.stop(); } catch(e){}
-            }
+            if (!window.Html5Qrcode) { console.warn("html5-qrcode not loaded"); return; }
+            if (!html5QrCode) { html5QrCode = new Html5Qrcode("qrReader"); }
+            else { try { await html5QrCode.stop(); } catch(e){} }
 
             const cameras = await Html5Qrcode.getCameras().catch(() => []);
-            if (!cameras || !cameras.length) {
-              console.warn("No camera found. Use manual input.");
-              return;
-            }
+            if (!cameras || !cameras.length) { console.warn("No camera found"); return; }
             await html5QrCode.start(
               { facingMode: "environment" },
               { fps: 10, qrbox: 250 },
@@ -278,46 +259,34 @@
               () => {}
             );
 
-            // Stop camera when modal closed by user
             qrModalEl.addEventListener('hidden.bs.modal', () => {
               if (html5QrCode) { html5QrCode.stop().catch(()=>{}); }
             }, { once: true });
-
-          } catch (e) {
-            console.warn("QR init failed:", e);
-          }
+          } catch (e) { console.warn("QR init failed:", e); }
         }, 250);
       });
 
-      // Manual meter number set (fallback)
       btnManualSet.addEventListener('click', () => {
         const val = (manualMeterInput.value || "").trim().replace(/[^0-9]/g, "");
-        if (val.length !== 11) {
-          alert("กรุณากรอกตัวเลข 11 หลัก");
-          return;
-        }
+        if (val.length !== 11) { alert("กรุณากรอกตัวเลข 11 หลัก"); return; }
         scannedMeter = val;
         if (html5QrCode) { html5QrCode.stop().catch(()=>{}); }
         qrModal.hide();
         updateTableAfterScan();
       });
 
-      // NEW -> keypad modal
       btnNew.addEventListener('click', () => {
         displayInput.value = "";
         keypadModal.show();
       });
 
-      // Keypad clicks
       document.querySelectorAll('#keypadModal .keypad .btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const key = btn.getAttribute('data-key');
           const action = btn.getAttribute('data-action');
           if (key) {
             if (displayInput.value === "0") displayInput.value = "";
-            if (displayInput.value.length < 10) {
-              displayInput.value += key;
-            }
+            if (displayInput.value.length < 10) { displayInput.value += key; }
           } else if (action === 'back') {
             displayInput.value = displayInput.value.slice(0, -1);
           } else if (action === 'clear') {
@@ -326,19 +295,14 @@
         });
       });
 
-      // RECORD flow
       btnRecord.addEventListener('click', () => {
         const val = parseInt(displayInput.value || "0", 10);
         if (isNaN(val)) { alert("กรุณาป้อนตัวเลข"); return; }
         const diff = val - PREV_READING;
-        if (diff < 50) {
-          alert("กรุณาเช็คข้อมูลอีกครั้ง!");
-          return;
-        }
+        if (diff < 50) { alert("กรุณาเช็คข้อมูลอีกครั้ง!"); return; }
         confirmModal.show();
       });
 
-      // Confirm modal buttons
       btnCancelSave.addEventListener('click', () => {
         displayInput.value = "";
         confirmModal.hide();
@@ -348,13 +312,11 @@
         confirmModal.hide();
         keypadModal.hide();
         const val = parseInt(displayInput.value || "0", 10);
-        if (!isNaN(val)) {
-          setTodayValues(val);
-        }
+        if (!isNaN(val)) { setTodayValues(val); }
       });
 
-      // Initial state
-      readerNameEl.textContent = READER_NAME;
+      // Initial state — DO NOT show name before scan
+      readerNameEl.textContent = "-";
       prevReadingEl.textContent = "-";
     });
   </script>
