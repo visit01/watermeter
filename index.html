@@ -593,22 +593,22 @@
                 console.log("--- JSON Data (data1) to be Sent ---");
                 console.log(JSON.stringify(data1, null, 2));
 
-                // Send json (data1) to URL via POST Method
-                const targetUrl = 'http://128.199.172.248:1880/watermeter';
+                // Create datajson = base64 of data1
+                const datajson = btoa(unescape(encodeURIComponent(JSON.stringify(data1))));
                 
-                fetch(targetUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data1)
+                // Send datajson to URL via GET Method
+                const targetUrl = 'http://128.199.172.248:1880/watermeter';
+                const urlWithParams = `${targetUrl}?dapi=${datajson}`;
+                
+                fetch(urlWithParams, { 
+                    method: 'GET' 
                 })
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     console.log('Server response received.');
-                    return response.text();
+                    return response.text(); 
                 })
                 .then(data => {
                     console.log('Response from server:', data);
