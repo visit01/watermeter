@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ดูรูปมาตรน้ำอัจฉริยะ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background-color: #f0f8ff;
+        }
+        .container {
+            max-width: 600px;
+        }
+        .logo {
+            font-size: 4rem;
+            color: #0d6efd;
+        }
+        #qr-reader {
+            width: 100%;
+            border: 1px solid #dee2e6;
+            border-radius: .375rem;
+        }
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+        .thumbnail:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container p-3">
+
+        <div id="scan-section" class="text-center">
+            <i class="bi bi-droplet-fill logo"></i>
+            <h1 class="h3 my-3">ดูรูปมาตรน้ำอัจฉริยะ</h1>
+
+            <div id="qr-reader" class="mb-3"></div>
+
+            <button id="scan-btn" class="btn btn-primary btn-lg w-100 mb-2">
+                <i class="bi bi-qr-code-scan"></i> สแกนผู้ใช้น้ำ
+            </button>
+
+            <div class="input-group">
+                <input type="number" id="manual-meter-input" class="form-control" placeholder="ป้อนหมายเลขมิเตอร์ (11 หลัก)">
+                <button id="manual-submit-btn" class="btn btn-secondary">ยืนยัน</button>
+            </div>
+        </div>
+
+        <div id="user-info-section" class="d-none">
+            <h2 class="h4 mb-3"><i class="bi bi-person-lines-fill"></i> ข้อมูลผู้ใช้น้ำ</h2>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th scope="row" style="width: 40%;">หมายเลขมิเตอร์น้ำ</th>
+                            <td id="meter-number"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">ผู้ใช้น้ำ</th>
+                            <td id="user-name"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">ที่อยู่</th>
+                            <td id="user-address"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">วันที่จดครั้งก่อน</th>
+                            <td id="last-read-date"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">เลขครั้งก่อน</th>
+                            <td id="last-read-value"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">ผู้จดมิเตอร์</th>
+                            <td id="recorder-name"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button id="show-images-btn" class="btn btn-success w-100 mt-2">
+                <i class="bi bi-camera-fill"></i> บันทึกเลขมิเตอร์น้ำ
+            </button>
+        </div>
+
+        <div id="image-list-section" class="d-none">
+            <h2 class="h4 mb-3"><i class="bi bi-images"></i> รูปภาพมาตรน้ำ</h2>
+              <p class="text-muted">หมายเลขมิเตอร์: <strong id="image-list-meter-number"></strong></p>
+            <div id="loading-spinner" class="text-center my-4 d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p>กำลังค้นหารูปภาพ...</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">วันที่</th>
+                            <th scope="col">รูปมิเตอร์น้ำ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="image-list-table-body">
+                        </tbody>
+                </table>
+            </div>
+              <button id="back-to-scan-btn" class="btn btn-outline-secondary w-100 mt-3">
+                <i class="bi bi-arrow-left"></i> กลับไปหน้าแรก
+            </button>
+        </div>
+    </div>
+
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">รูปภาพขนาดเต็ม</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modal-image" src="" class="img-fluid" alt="รูปมาตรน้ำ">
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <script>
+        // ===============================================================
+        // JavaScript Logic
+        // ===============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // === ส่วนของการประกาศตัวแปรและ Element ที่ต้องใช้ ===
+            const scanSection = document.getElementById('scan-section');
+            const userInfoSection = document.getElementById('user-info-section');
+            const imageListSection = document.getElementById('image-list-section');
+            const scanBtn = document.getElementById('scan-btn');
+            const manualSubmitBtn = document.getElementById('manual-submit-btn');
+            const showImagesBtn = document.getElementById('show-images-btn');
+            const backToScanBtn = document.getElementById('back-to-scan-btn');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+            const modalImage = document.getElementById('modal-image');
+            
+            let currentMeterNumber = null;
+            let html5QrCode = null;
+
+            // === Flow 1: การสแกน QR Code ===
+            scanBtn.addEventListener('click', () => {
+                scanBtn.disabled = true;
+                scanBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> กำลังเปิดกล้อง...';
+                
+                // Initialize QR Code Scanner
+                html5QrCode = new Html5Qrcode("qr-reader");
+                const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                    // ตรวจสอบว่าเป็นตัวเลข 11 หลักหรือไม่
+                    if (/^\d{11}$/.test(decodedText)) {
+                        handleSuccessfulScan(decodedText);
+                        html5QrCode.stop().catch(err => console.error("ไม่สามารถหยุดกล้องได้", err));
+                    } else {
+                        alert("QR Code ไม่ถูกต้อง (ต้องเป็นตัวเลข 11 หลัก)");
+                    }
+                };
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+                    .catch(err => {
+                        console.error("ไม่สามารถเริ่มการสแกน QR Code ได้", err);
+                        alert("ไม่สามารถเปิดกล้องได้ โปรดตรวจสอบการอนุญาต");
+                        resetScanButton();
+                    });
+            });
+            
+            // === การป้อนหมายเลขด้วยตนเอง ===
+            manualSubmitBtn.addEventListener('click', () => {
+                const meterInput = document.getElementById('manual-meter-input').value;
+                if (/^\d{11}$/.test(meterInput)) {
+                    handleSuccessfulScan(meterInput);
+                } else {
+                    alert("กรุณาป้อนหมายเลขมิเตอร์ให้ถูกต้อง (ตัวเลข 11 หลัก)");
+                }
+            });
+
+            // === Function: จัดการเมื่อสแกนสำเร็จ ===
+            function handleSuccessfulScan(meterNumber) {
+                currentMeterNumber = meterNumber;
+                displayUserInfo(meterNumber);
+                // ซ่อนส่วนสแกนและแสดงส่วนข้อมูลผู้ใช้
+                scanSection.classList.add('d-none');
+                userInfoSection.classList.remove('d-none');
+            }
+
+            // === Flow 2: การแสดงข้อมูลผู้ใช้ (Mock Data) ===
+            function displayUserInfo(meterNumber) {
+                // ข้อมูลจำลอง (Mock Data)
+                const lastMonth = new Date();
+                lastMonth.setMonth(lastMonth.getMonth() - 1);
+                const formattedDate = `${lastMonth.getDate()}/${lastMonth.getMonth() + 1}/${lastMonth.getFullYear()} ${lastMonth.getHours()}:${lastMonth.getMinutes().toString().padStart(2, '0')}`;
+
+                document.getElementById('meter-number').textContent = meterNumber;
+                document.getElementById('user-name').textContent = 'อ.ทอง หลอมประโคน';
+                document.getElementById('user-address').textContent = '123/45 หมู่ 6 ต.ในเมือง อ.เมือง จ.นครราชสีมา 30000';
+                document.getElementById('last-read-date').textContent = formattedDate;
+                document.getElementById('last-read-value').textContent = '1562';
+                document.getElementById('recorder-name').textContent = 'นางสาว พรทิพย์ รุ่งเรืองดี';
+            }
+
+            // === Flow 3: การกดปุ่ม "บันทึกเลขมิเตอร์น้ำ" เพื่อแสดงรูป ===
+            showImagesBtn.addEventListener('click', () => {
+                userInfoSection.classList.add('d-none');
+                imageListSection.classList.remove('d-none');
+                document.getElementById('image-list-meter-number').textContent = currentMeterNumber;
+                fetchAndDisplayImages(currentMeterNumber);
+            });
+
+            // === Flow 4: การดึงข้อมูลและแสดงรูปภาพ ===
+            function fetchAndDisplayImages(meterNumber) {
+                loadingSpinner.classList.remove('d-none');
+                const imageListBody = document.getElementById('image-list-table-body');
+                imageListBody.innerHTML = ''; // เคลียร์ข้อมูลเก่า
+                
+                const imageUrl = `https://saijai.tech/watermeter_images/55555555555-2025-09-18_173736.jpg`;
+                
+                // สร้าง object Image เพื่อทดสอบการโหลด
+                const tempImg = new Image();
+                tempImg.src = imageUrl;
+
+                // เมื่อรูปโหลดสำเร็จ
+                tempImg.onload = () => {
+                    const row = document.createElement('tr');
+                    
+                    // Cell 1: Index
+                    const cellIndex = document.createElement('td');
+                    cellIndex.textContent = 1;
+                    row.appendChild(cellIndex);
+                    
+                    // Cell 2: Date (extracted from URL)
+                    const cellDate = document.createElement('td');
+                    const dateString = "2025-09-18";
+                    const [year, month, day] = dateString.split('-');
+                    cellDate.textContent = `${day}/${month}/${year}`;
+                    row.appendChild(cellDate);
+                    
+                    // Cell 3: Thumbnail Image
+                    const cellImage = document.createElement('td');
+                    const img = document.createElement('img');
+                    img.src = imageUrl;
+                    img.alt = `รูปมาตรน้ำ`;
+                    img.className = 'thumbnail';
+                    img.addEventListener('click', () => {
+                        modalImage.src = imageUrl;
+                        imageModal.show();
+                    });
+                    cellImage.appendChild(img);
+                    row.appendChild(cellImage);
+                    
+                    imageListBody.appendChild(row);
+                    loadingSpinner.classList.add('d-none');
+                };
+
+                // เมื่อเกิดข้อผิดพลาดในการโหลดรูป
+                tempImg.onerror = () => {
+                    console.error("เกิดข้อผิดพลาดในการดึงรูปภาพ: ไม่สามารถโหลดรูปภาพได้จาก URL:", imageUrl);
+                    imageListBody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">ไม่พบรูปภาพสำหรับหมายเลขมิเตอร์นี้</td></tr>`;
+                    loadingSpinner.classList.add('d-none');
+                };
+            }
+            
+            // === การทำงานของปุ่มย้อนกลับ ===
+            backToScanBtn.addEventListener('click', () => {
+                // Reset to initial state
+                imageListSection.classList.add('d-none');
+                scanSection.classList.remove('d-none');
+                document.getElementById('manual-meter-input').value = '';
+                document.getElementById('image-list-table-body').innerHTML = '';
+                 // หยุดกล้องถ้ายังทำงานอยู่ (กรณีผู้ใช้กดย้อนกลับขณะกล้องเปิด)
+                if (html5QrCode && html5QrCode.isScanning) {
+                    html5QrCode.stop().catch(err => console.error("ไม่สามารถหยุดกล้องได้", err));
+                }
+                resetScanButton();
+            });
+            
+            function resetScanButton() {
+                 scanBtn.disabled = false;
+                 scanBtn.innerHTML = '<i class="bi bi-qr-code-scan"></i> สแกนผู้ใช้น้ำ';
+            }
+        });
+    </script>
+</body>
+</html>
+
