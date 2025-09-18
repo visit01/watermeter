@@ -413,8 +413,11 @@
             const ocrCameraInput = document.getElementById('ocr-camera-input');
             const btnOcrCamera = document.getElementById('btn-ocr-camera');
             const btnOcrUpload = document.getElementById('btn-ocr-upload');
-
+            
             let html5QrCode;
+            let ocrWorker = null;
+            let isWorkerReady = false;
+            let isWorkerInitializing = false;
 
             // Helper function to format date
             const formatDateTime = (date) => {
@@ -515,6 +518,9 @@
             btnOpenCalculator.addEventListener('click', () => {
                 calculatorDisplay.value = '';
                 calculatorModal.show();
+                if (!isWorkerReady) {
+                    initializeOcrWorker();
+                }
             });
 
             document.querySelectorAll('.btn-num').forEach(button => {
@@ -558,6 +564,37 @@
             });
 
             // --- OCR Logic ---
+
+            const initializeOcrWorker = async () => {
+                if (isWorkerReady || isWorkerInitializing) return;
+
+                isWorkerInitializing = true;
+                processingModal.show();
+                processingStatus.textContent = 'กำลังเตรียมระบบสแกน...';
+
+                try {
+                    const worker = await Tesseract.createWorker('eng', 1, {
+                        logger: m => {
+                            const progress = Math.round(m.progress * 100);
+                            if (m.status.includes('loading')) {
+                                processingStatus.textContent = `กำลังโหลดข้อมูล... (${progress}%)`;
+                            }
+                        }
+                    });
+                    await worker.setParameters({
+                        tessedit_char_whitelist: '0123456789',
+                    });
+                    ocrWorker = worker;
+                    isWorkerReady = true;
+                } catch (err) {
+                    console.error('Failed to initialize OCR worker', err);
+                    showCustomAlert('ไม่สามารถเริ่มต้นระบบสแกนได้ กรุณาตรวจสอบอินเทอร์เน็ต');
+                } finally {
+                    isWorkerInitializing = false;
+                    processingModal.hide();
+                }
+            };
+            
             btnOcrCamera.addEventListener('click', () => {
                 ocrChoiceModal.hide();
                 ocrCameraInput.click();
@@ -596,30 +633,23 @@
                 const file = event.target.files[0];
                 if (!file) return;
 
+                if (!isWorkerReady) {
+                    await initializeOcrWorker();
+                    if (!isWorkerReady) { event.target.value = ''; return; }
+                }
+
                 const reader = new FileReader();
+                reader.onerror = () => showCustomAlert('ไม่สามารถอ่านไฟล์รูปภาพได้');
                 reader.onload = (e) => {
                     const img = new Image();
+                    img.onerror = () => showCustomAlert('ไฟล์ที่เลือกไม่ใช่รูปภาพที่ถูกต้อง');
                     img.onload = async () => {
                         processingModal.show();
                         try {
                             const processedCanvas = preprocessImage(img);
-
-                            const worker = await Tesseract.createWorker('eng', 1, {
-                                logger: m => {
-                                    if (m.status === 'recognizing text') {
-                                        processingStatus.textContent = `กำลังสแกน... (${Math.round(m.progress * 100)}%)`;
-                                    } else {
-                                        processingStatus.textContent = `กำลังเตรียมไฟล์...`;
-                                    }
-                                }
-                            });
-
-                            await worker.setParameters({
-                                tessedit_char_whitelist: '0123456789',
-                            });
+                            processingStatus.textContent = 'กำลังสแกน...';
                             
-                            const { data: { text } } = await worker.recognize(processedCanvas);
-                            await worker.terminate();
+                            const { data: { text } } = await ocrWorker.recognize(processedCanvas);
 
                             const numbers = text.replace(/\D/g, '');
                             if (numbers) {
@@ -646,3 +676,4 @@
     </script>
 </body>
 </html>
+
