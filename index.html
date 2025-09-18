@@ -536,7 +536,7 @@
             // --- Meter Photo Compression & GPS Logic ---
             function compressAndEncodeImage(file) {
                 const MAX_WIDTH = 1024; 
-                const TARGET_SIZE_KB = 100;
+                const TARGET_SIZE_KB = 50;
                 const reader = new FileReader();
 
                 reader.onload = (e) => {
@@ -575,7 +575,10 @@
                     }
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
-                            const coords = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+                            const coords = {
+                                lat: position.coords.latitude.toFixed(6),
+                                long: position.coords.longitude.toFixed(6)
+                            };
                             resolve(coords);
                         },
                         () => {
@@ -628,7 +631,7 @@
                 document.getElementById('current-date').textContent = formattedToday;
                 document.getElementById('current-reading').textContent = currentValue;
                 document.getElementById('usage').textContent = `${usage} หน่วย`;
-                locationGpsEl.textContent = locationCoordinates || 'ไม่มีข้อมูล';
+                locationGpsEl.textContent = locationCoordinates ? `${locationCoordinates.lat}, ${locationCoordinates.long}` : 'ไม่มีข้อมูล';
 
                 if (meterPhotoBase64) {
                     meterPhotoThumbnailEl.src = meterPhotoBase64;
@@ -645,6 +648,7 @@
                     "วันที่จดวันนี้": timestamp,
                     "เลขมิเตอร์วันนี้": currentValue,
                     "หน่วยน้ำที่ใช้": usage,
+                    "พิกัดมิเตอร์น้ำ": locationCoordinates,
                     "รูปมิเตอร์น้ำ": meterPhotoBase64,
                     "พิกัดสถานที่": locationCoordinates
                 };
