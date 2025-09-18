@@ -273,7 +273,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- State Variables ---
             let meterPhotoBase64 = null;
-            let locationCoordinates = null;
             let cropper;
             let html5QrCode;
 
@@ -305,7 +304,7 @@
             const calculatorDisplay = document.getElementById('calculator-display');
             const calcDeleteBtn = document.getElementById('calc-delete');
 
-            // --- OCR, Photo & GPS elements ---
+            // --- OCR, Photo elements ---
             const ocrFileInput = document.getElementById('ocr-file-input');
             const ocrStatus = document.getElementById('ocr-status');
             const imageToCrop = document.getElementById('image-to-crop');
@@ -378,7 +377,7 @@
                 if (screenName === 'userInfo') userInfoScreen.style.display = 'block';
             };
             
-            // --- NEW RECORDING FLOW ---
+            // --- RECORDING FLOW ---
             recordBtn.addEventListener('click', () => {
                  // Trigger the hidden file input for the camera
                 meterPhotoInput.click();
@@ -387,15 +386,7 @@
             meterPhotoInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
-                    // Start image compression and GPS fetch simultaneously
                     compressAndEncodeImage(file); 
-                    getGpsLocation().then(coords => {
-                        locationCoordinates = coords;
-                    }).catch(error => {
-                        locationCoordinates = `ผิดพลาด: ${error}`;
-                    });
-                    
-                    // Clear display and show calculator
                     calculatorDisplay.textContent = '';
                     calculatorModal.show();
                 }
@@ -488,7 +479,7 @@
                 ocrStatus.textContent = 'ใช้ OCR อ่านค่า';
             }
             
-            // --- Meter Photo Compression & GPS Logic ---
+            // --- Meter Photo Compression Logic ---
             function compressAndEncodeImage(file) {
                 const MAX_WIDTH = 1024; 
                 const TARGET_SIZE_KB = 50;
@@ -521,28 +512,6 @@
                 };
                 reader.readAsDataURL(file);
             }
-
-            function getGpsLocation() {
-                return new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) {
-                        reject('Geolocation is not supported by your browser');
-                        return;
-                    }
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            const coords = {
-                                lat: position.coords.latitude.toFixed(6),
-                                long: position.coords.longitude.toFixed(6)
-                            };
-                            resolve(coords);
-                        },
-                        () => {
-                            reject('Unable to retrieve your location');
-                        }
-                    );
-                });
-            }
-
 
             // --- Save and Validation Logic ---
             saveReadingBtn.addEventListener('click', () => {
@@ -599,10 +568,6 @@
                         </td>
                     </tr>
                     <tr class="result-row">
-                        <th>พิกัดสถานที่</th>
-                        <td id="location-gps" class="text-primary">${(locationCoordinates && typeof locationCoordinates === 'object') ? `${locationCoordinates.lat}, ${locationCoordinates.long}` : (locationCoordinates || 'ไม่มีข้อมูล')}</td>
-                    </tr>
-                    <tr class="result-row">
                         <th>หน่วยน้ำที่ใช้</th>
                         <td id="usage" class="fw-bold text-primary fs-5">${usage} หน่วย</td>
                     </tr>
@@ -622,9 +587,7 @@
                     "วันที่จดวันนี้": timestamp,
                     "เลขมิเตอร์วันนี้": currentValue,
                     "หน่วยน้ำที่ใช้": usage,
-                    "พิกัดมิเตอร์น้ำ": locationCoordinates,
-                    "รูปมิเตอร์น้ำ": meterPhotoBase64,
-                    "พิกัดสถานที่": locationCoordinates
+                    "รูปมิเตอร์น้ำ": meterPhotoBase64
                 };
                 console.log(JSON.stringify(resultData, null, 2));
             });
