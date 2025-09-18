@@ -36,34 +36,30 @@
             font-weight: 700;
             font-size: 1.5rem;
         }
-        .btn-scan {
+        .btn-action {
             font-size: 1.2rem;
             padding: 15px 0;
             font-weight: 700;
             border-radius: 15px;
             border: none;
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
-        .btn-scan:hover, .btn-scan:focus {
+        .btn-action:hover, .btn-action:focus {
             transform: translateY(-3px);
-            box-shadow: 0 7px 20px rgba(0, 123, 255, 0.3);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.15);
         }
         #btn-manual-input {
             background-color: #0dcaf0;
             border-color: #0dcaf0;
-            box-shadow: 0 4px 15px rgba(13, 202, 240, 0.2);
-        }
-         #btn-manual-input:hover, #btn-manual-input:focus {
-            box-shadow: 0 7px 20px rgba(13, 202, 240, 0.3);
         }
         #btn-open-calculator {
              background-color: #198754;
              border-color: #198754;
-             box-shadow: 0 4px 15px rgba(25, 135, 84, 0.2);
         }
-        #btn-open-calculator:hover, #btn-open-calculator:focus {
-             box-shadow: 0 7px 20px rgba(25, 135, 84, 0.3);
+        #btn-clear-data {
+            background-color: #dc3545;
+            border-color: #dc3545;
         }
         #qr-reader {
             width: 100%;
@@ -164,7 +160,7 @@
             transform: scale(0.95);
             border-radius: 10px;
         }
-        .btn-record {
+        .btn-submit-record {
             font-size: 1.4rem;
             padding: 22px 0;
             grid-column: span 3;
@@ -173,16 +169,8 @@
             font-weight: bold;
             letter-spacing: 1px;
         }
-        .btn-record:active {
+        .btn-submit-record:active {
             background-color: #157347;
-        }
-        #btn-clear-data {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
-        }
-        #btn-clear-data:hover, #btn-clear-data:focus {
-             box-shadow: 0 7px 20px rgba(220, 53, 69, 0.3);
         }
     </style>
 </head>
@@ -196,10 +184,10 @@
 
         <!-- Scan/Input Buttons -->
         <div id="initial-buttons" class="mt-4 d-grid gap-3">
-            <button id="btn-scan" class="btn btn-primary w-100 btn-scan">
+            <button id="btn-scan" class="btn btn-primary w-100 btn-action">
                 <i class="bi bi-qr-code-scan me-2"></i> สแกนผู้ใช้น้ำ
             </button>
-             <button id="btn-manual-input" class="btn btn-info w-100 btn-scan text-white">
+             <button id="btn-manual-input" class="btn btn-info w-100 btn-action text-white">
                 <i class="bi bi-keyboard me-2"></i> ป้อนข้อมูลผู้ใช้น้ำ
             </button>
         </div>
@@ -237,13 +225,13 @@
             </div>
             
             <div id="record-button-section" class="mt-3">
-                 <button id="btn-open-calculator" class="btn btn-success w-100 btn-scan">
+                 <button id="btn-open-calculator" class="btn btn-success w-100 btn-action">
                     <i class="bi bi-pencil-square me-2"></i> บันทึกเลขมิเตอร์น้ำ
                 </button>
             </div>
 
             <div id="clear-button-section" class="mt-3 d-none">
-                 <button id="btn-clear-data" class="btn btn-danger w-100 btn-scan">
+                 <button id="btn-clear-data" class="btn btn-danger w-100 btn-action">
                     <i class="bi bi-arrow-clockwise me-2"></i> ล้างข้อมูลและเริ่มใหม่
                 </button>
             </div>
@@ -284,8 +272,8 @@
                     <input type="file" id="ocr-camera-input" class="d-none" accept="image/*" capture="environment">
 
                     <div class="p-2 border-bottom">
-                        <button type="button" id="btn-ocr-scan" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#ocrChoiceModal">
-                            <i class="bi bi-camera"></i> สแกนเลขจากภาพ
+                        <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#ocrChoiceModal">
+                            <i class="bi bi-camera"></i> อ่านค่าตัวเลขจากภาพ
                         </button>
                     </div>
                     <input type="text" id="calculator-display" class="form-control" readonly placeholder="0">
@@ -302,7 +290,7 @@
                         <button type="button" id="btn-clear">C</button>
                         <button type="button" class="btn-num">0</button>
                         <button type="button" id="btn-backspace"><i class="bi bi-backspace"></i></button>
-                        <button type="button" id="btn-record-submit" class="btn-record">RECORD</button>
+                        <button type="button" id="btn-record-submit" class="btn-submit-record">บันทึกข้อมูล</button>
                     </div>
                 </div>
             </div>
@@ -314,15 +302,15 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="ocrChoiceModalLabel">เลือกวิธีสแกน</h5>
+                    <h5 class="modal-title" id="ocrChoiceModalLabel">เลือกวิธีอ่านค่าตัวเลข</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body d-grid gap-3">
                     <button type="button" id="btn-ocr-camera" class="btn btn-primary btn-lg">
-                        <i class="bi bi-camera-fill me-2"></i> ถ่ายภาพ
+                        <i class="bi bi-camera-fill me-2"></i> ถ่ายรูปใหม่
                     </button>
                     <button type="button" id="btn-ocr-upload" class="btn btn-secondary btn-lg">
-                        <i class="bi bi-images me-2"></i> เลือกจากอัลบั้ม
+                        <i class="bi bi-images me-2"></i> เลือกไฟล์รูป
                     </button>
                 </div>
             </div>
@@ -352,9 +340,9 @@
     <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="alertModalLabel">ข้อผิดพลาด</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="alertModalLabel">แจ้งเตือน</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="alertModalBody">
                 </div>
@@ -445,12 +433,12 @@
                 infoSection.classList.add('visible');
             };
 
-            const onScanSuccess = (decodedText, decodedResult) => {
-                html5QrCode.stop().then(() => {
-                    qrReaderDiv.style.display = 'none';
-                }).catch(err => {
-                    console.error("Failed to stop QR Code scanning.", err);
-                });
+            const onScanSuccess = (decodedText) => {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    html5QrCode.stop().catch(err => console.error("Failed to stop QR Code scanning.", err));
+                }
+                qrReaderDiv.style.display = 'none';
+
                 if (/^\d{11}$/.test(decodedText)) {
                     processMeterId(decodedText);
                 } else {
@@ -489,7 +477,7 @@
                 html5QrCode = new Html5Qrcode("qr-reader");
                 const config = { fps: 10, qrbox: { width: 250, height: 250 } };
                 html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError)
-                    .catch(err => {
+                    .catch(() => {
                         showCustomAlert("ไม่สามารถเข้าถึงกล้องได้");
                         initialButtons.style.display = 'grid';
                         qrReaderDiv.style.display = 'none';
@@ -569,13 +557,11 @@
             // --- OCR Logic ---
             btnOcrCamera.addEventListener('click', () => {
                 ocrChoiceModal.hide();
-                // Directly trigger the camera input. This is more reliable on Safari.
                 ocrCameraInput.click();
             });
 
             btnOcrUpload.addEventListener('click', () => {
                 ocrChoiceModal.hide();
-                // Directly trigger the file input.
                 ocrFileInput.click();
             });
 
@@ -596,7 +582,6 @@
                         }
                     });
 
-                    // Set the worker to only recognize digits for better accuracy
                     await worker.setParameters({
                         tessedit_char_whitelist: '0123456789',
                     });
@@ -604,7 +589,7 @@
                     const { data: { text } } = await worker.recognize(file);
                     await worker.terminate();
 
-                    const numbers = text.replace(/\D/g, ''); // Extract only digits
+                    const numbers = text.replace(/\D/g, '');
                     if (numbers) {
                         calculatorDisplay.value = numbers;
                     } else {
