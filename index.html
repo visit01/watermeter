@@ -4,262 +4,181 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบจดมาตรน้ำอัจฉริยะ</title>
+    
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <style>
         body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: #f0f2f5;
+            background-color: #f0f8ff; /* Light blue background */
+            font-family: 'Sarabun', sans-serif; /* A nice Thai font */
         }
-        .main-container {
+        .container {
             max-width: 600px;
-            margin: auto;
         }
         .header {
-            background: linear-gradient(135deg, #0d6efd, #0056b3);
-            color: white;
-            padding: 25px 20px;
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
             text-align: center;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            padding: 2rem 0;
+            color: #0d6efd;
         }
-        .header h3 {
-            margin: 0;
-            font-weight: 700;
-            font-size: 1.5rem;
+        .header .logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
         }
-        .btn-action {
-            font-size: 1.2rem;
-            padding: 15px 0;
-            font-weight: 700;
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-        .btn-action:hover, .btn-action:focus {
-            transform: translateY(-3px);
-            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.15);
-        }
-        #btn-manual-input {
-            background-color: #0dcaf0;
-            border-color: #0dcaf0;
-        }
-        #btn-open-calculator {
-             background-color: #198754;
-             border-color: #198754;
-        }
-        #btn-clear-data {
-            background-color: #dc3545;
-            border-color: #dc3545;
+        .card {
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         #qr-reader {
             width: 100%;
-            border-radius: 15px;
-            overflow: hidden;
-            display: none;
-            margin-top: 1.5rem;
-            border: 4px solid #0d6efd;
-            box-shadow: 0 0 20px rgba(13, 110, 253, 0.25);
+            border-radius: 0.5rem;
+            border: 2px dashed #0d6efd;
+            overflow: hidden; /* Ensures the border-radius is respected */
         }
-        .info-card {
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            margin-top: 1.5rem;
-            border: none;
-            overflow: hidden;
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+            font-size: 1.25rem;
+            border-radius: 0.5rem;
         }
-        #info-section {
-            transition: max-height 0.7s ease-in-out, opacity 0.5s 0.2s ease-in-out, transform 0.5s 0.2s ease-in-out;
-            opacity: 0;
-            transform: translateY(20px);
-            visibility: hidden;
-            max-height: 0;
-            overflow: hidden;
-        }
-        #info-section.visible {
-            opacity: 1;
-            transform: translateY(0);
-            visibility: visible;
-            max-height: 1000px;
-        }
-        .table-custom {
-            margin-bottom: 0;
-        }
-        .table-custom td {
-            padding: 0.9rem;
-            border-top: 1px solid #dee2e6;
-            vertical-align: middle;
-        }
-        .table-custom td:first-child {
-            font-weight: 700;
-            width: 45%;
-            color: #495057;
-        }
-        .table-custom td:first-child .bi {
-             font-size: 1.2rem;
-             color: #0d6efd;
-        }
-        .result-table {
-            background-color: #e0f7ff;
-        }
-        .result-table .unit-used {
-            font-weight: bold;
-            color: #0056b3;
-            font-size: 1.1rem;
-        }
-        .result-table .table-custom td:first-child .bi {
-            color: #0056b3;
-        }
-        /* Calculator Modal */
-        #calculatorModal .modal-content {
-            border-radius: 20px;
-            border: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        .modal-body-calculator {
-            padding: 0;
-        }
-        #calculator-display {
-            background-color: #f8f9fa;
-            border: none;
-            font-size: 3.5rem;
+        
+        /* Calculator Modal Styles */
+        .calculator-display {
+            background-color: #e9ecef;
+            border-radius: 0.5rem;
+            font-size: 2.5rem;
             font-weight: bold;
             text-align: right;
-            padding: 25px 20px;
-            letter-spacing: 2px;
-            color: #343a40;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            min-height: 80px;
         }
-        .calculator-keys {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1px;
-            background-color: #dee2e6;
+        .calculator .btn {
+            font-size: 1.5rem;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        .calculator-keys button {
-            font-size: 1.8rem;
-            padding: 22px 0;
-            border: none;
-            background-color: #fff;
-            color: #333;
-            transition: all 0.1s ease-in-out;
-            font-weight: 500;
+        #ocr-status {
+            font-style: italic;
+            color: #6c757d;
         }
-        .calculator-keys button:active {
-            background-color: #007bff;
-            color: white;
-            transform: scale(0.95);
-            border-radius: 10px;
-        }
-        .btn-submit-record {
-            font-size: 1.4rem;
-            padding: 22px 0;
-            grid-column: span 3;
-            background-color: #198754;
-            color: white;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-        .btn-submit-record:active {
-            background-color: #157347;
+
+        /* Hide the default file input */
+        #ocr-file-input {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="main-container p-3">
-        <!-- Header -->
-        <div class="header d-flex align-items-center justify-content-center">
-             <i class="bi bi-droplet-fill me-3" style="font-size: 35px;"></i>
-            <h3>ระบบจดมาตรน้ำอัจฉริยะ</h3>
+
+    <div class="container mt-3">
+        <!-- Header with Logo -->
+        <div class="header">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-droplet-fill" viewBox="0 0 16 16">
+                    <path d="M8 16a6 6 0 0 0 6-6c0-1.655-1.122-2.904-2.432-4.362C10.254 4.176 8.75 2.503 8 0 7.25 2.503 5.746 4.176 4.432 5.638 3.122 7.096 2 8.345 2 10a6 6 0 0 0 6 6"/>
+                </svg>
+            </div>
+            <h1 class="h2">ระบบจดมาตรน้ำอัจฉริยะ</h1>
         </div>
 
-        <!-- Scan/Input Buttons -->
-        <div id="initial-buttons" class="mt-4 d-grid gap-3">
-            <button id="btn-scan" class="btn btn-primary w-100 btn-action">
-                <i class="bi bi-qr-code-scan me-2"></i> สแกนผู้ใช้น้ำ
-            </button>
-             <button id="btn-manual-input" class="btn btn-info w-100 btn-action text-white">
-                <i class="bi bi-keyboard me-2"></i> ป้อนข้อมูลผู้ใช้น้ำ
-            </button>
+        <!-- 1. Initial Screen -->
+        <div id="initial-screen">
+            <div class="card p-4 text-center">
+                <button id="scan-btn" class="btn btn-primary btn-lg w-100 mb-3">
+                    <i class="bi bi-qr-code-scan"></i> สแกนผู้ใช้น้ำ
+                </button>
+                <p class="text-muted mb-2">หรือ</p>
+                <div class="input-group">
+                    <input type="number" id="manual-meter-input" class="form-control" placeholder="ป้อนหมายเลขมิเตอร์ 11 หลัก">
+                    <button id="manual-submit-btn" class="btn btn-outline-secondary" type="button">ตกลง</button>
+                </div>
+            </div>
         </div>
-        <div id="qr-reader"></div>
 
-        <!-- Information Tables -->
-        <div id="info-section">
-            <div class="card info-card mt-4">
-                <div class="card-body p-0">
-                    <table class="table table-custom table-striped mb-0">
+        <!-- QR Code Scanner (hidden by default) -->
+        <div id="scanner-container" class="text-center" style="display: none;">
+             <div class="card p-3">
+                <div id="qr-reader"></div>
+                <button id="close-scanner-btn" class="btn btn-sm btn-danger mt-3">ปิดกล้อง</button>
+            </div>
+        </div>
+
+        <!-- 2. User Info Screen (hidden by default) -->
+        <div id="user-info-screen" style="display: none;">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-circle"></i> ข้อมูลผู้ใช้น้ำ</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0">
                         <tbody>
-                            <tr><td><i class="bi bi-upc-scan me-2"></i>หมายเลขมิเตอร์น้ำ</td><td id="meter-id"></td></tr>
-                            <tr><td><i class="bi bi-person me-2"></i>ผู้ใช้น้ำ</td><td id="user-name"></td></tr>
-                            <tr><td><i class="bi bi-geo-alt me-2"></i>ที่อยู่</td><td id="user-address"></td></tr>
-                            <tr><td><i class="bi bi-calendar-check me-2"></i>วันที่จดครั้งก่อน</td><td id="prev-date"></td></tr>
-                            <tr><td><i class="bi bi-speedometer2 me-2"></i>เลขครั้งก่อน</td><td id="prev-reading"></td></tr>
-                            <tr><td><i class="bi bi-person-check me-2"></i>ผู้จดมิเตอร์</td><td id="recorder-name"></td></tr>
+                            <tr>
+                                <th class="w-50">หมายเลขมิเตอร์น้ำ</th>
+                                <td id="meter-id"></td>
+                            </tr>
+                            <tr>
+                                <th>ผู้ใช้น้ำ</th>
+                                <td id="user-name">อ.ทอง หลอมประโคน</td>
+                            </tr>
+                            <tr>
+                                <th>ที่อยู่</th>
+                                <td id="user-address">123/45 หมู่ 6 ต.ในเมือง อ.เมือง จ.นครราชสีมา 30000</td>
+                            </tr>
+                            <tr>
+                                <th>วันที่จดครั้งก่อน</th>
+                                <td id="last-date"></td>
+                            </tr>
+                            <tr>
+                                <th>เลขครั้งก่อน</th>
+                                <td id="last-reading">1562</td>
+                            </tr>
+                            <tr>
+                                <th>ผู้จดมิเตอร์</th>
+                                <td id="reader-name">นางสาว พรทิพย์ รุ่งเรืองดี</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
-
-            <div id="result-section" class="d-none">
-                <div class="card info-card mt-3 result-table">
-                     <div class="card-body p-0">
-                        <table class="table table-custom mb-0">
-                            <tbody>
-                                <tr><td><i class="bi bi-calendar-event me-2"></i>วันที่จดวันนี้</td><td id="current-date"></td></tr>
-                                <tr><td><i class="bi bi-speedometer me-2"></i>เลขวันนี้</td><td id="current-reading"></td></tr>
-                                <tr><td class="unit-used"><i class="bi bi-droplet me-2"></i>หน่วยใช้น้ำ</td><td id="unit-used" class="unit-used"></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="card-footer text-center">
+                     <button id="record-btn" class="btn btn-success btn-lg w-100">
+                        <i class="bi bi-pencil-square"></i> บันทึกเลขมิเตอร์น้ำ
+                    </button>
                 </div>
-            </div>
-            
-            <div id="record-button-section" class="mt-3">
-                 <button id="btn-open-calculator" class="btn btn-success w-100 btn-action">
-                    <i class="bi bi-pencil-square me-2"></i> บันทึกเลขมิเตอร์น้ำ
-                </button>
-            </div>
-
-            <div id="clear-button-section" class="mt-3 d-none">
-                 <button id="btn-clear-data" class="btn btn-danger w-100 btn-action">
-                    <i class="bi bi-arrow-clockwise me-2"></i> ล้างข้อมูลและเริ่มใหม่
-                </button>
             </div>
         </div>
-    </div>
 
-    <!-- Hidden Canvas for Image Processing -->
-    <canvas id="image-processing-canvas" class="d-none"></canvas>
-
-    <!-- Manual Input Modal -->
-    <div class="modal fade" id="manualInputModal" tabindex="-1" aria-labelledby="manualInputModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="manualInputModalLabel">ป้อนหมายเลขมิเตอร์น้ำ</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- 3. Final Result Screen (hidden by default) -->
+        <div id="result-screen" style="display: none;">
+            <div class="card bg-info-subtle border-primary">
+                 <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle-fill"></i> บันทึกข้อมูลสำเร็จ</h5>
                 </div>
-                <div class="modal-body">
-                    <form id="manual-input-form">
-                        <div class="mb-3">
-                            <label for="manual-meter-id" class="form-label">หมายเลขมิเตอร์น้ำ (11 หลัก)</label>
-                            <input type="text" class="form-control form-control-lg" id="manual-meter-id" placeholder="กรอกตัวเลข 11 หลัก" inputmode="numeric" pattern="\d{11}" maxlength="11" required>
-                        </div>
-                    </form>
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <th class="w-50">วันที่จดวันนี้</th>
+                                <td id="current-date"></td>
+                            </tr>
+                            <tr>
+                                <th>เลขมิเตอร์วันนี้</th>
+                                <td id="current-reading"></td>
+                            </tr>
+                            <tr>
+                                <th>หน่วยน้ำที่ใช้</th>
+                                <td id="usage" class="fw-bold text-primary fs-5"></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="submit" class="btn btn-primary" form="manual-input-form">ตกลง</button>
+                 <div class="card-footer text-center">
+                    <button id="reset-btn" class="btn btn-warning btn-lg w-100">
+                        <i class="bi bi-arrow-repeat"></i> ล้างข้อมูลและเริ่มใหม่
+                    </button>
                 </div>
             </div>
         </div>
@@ -267,413 +186,303 @@
 
     <!-- Calculator Modal -->
     <div class="modal fade" id="calculatorModal" tabindex="-1" aria-labelledby="calculatorModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content">
-                <div class="modal-body modal-body-calculator">
-                    <!-- Hidden file inputs for OCR -->
-                    <input type="file" id="ocr-file-input" class="d-none" accept="image/*">
-                    <input type="file" id="ocr-camera-input" class="d-none" accept="image/*" capture="environment">
-
-                    <div class="p-2 border-bottom">
-                        <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#ocrChoiceModal">
-                            <i class="bi bi-camera"></i> อ่านค่าตัวเลขจากภาพ
-                        </button>
-                    </div>
-                    <input type="text" id="calculator-display" class="form-control" readonly placeholder="0">
-                    <div class="calculator-keys">
-                        <button type="button" class="btn-num">1</button>
-                        <button type="button" class="btn-num">2</button>
-                        <button type="button" class="btn-num">3</button>
-                        <button type="button" class="btn-num">4</button>
-                        <button type="button" class="btn-num">5</button>
-                        <button type="button" class="btn-num">6</button>
-                        <button type="button" class="btn-num">7</button>
-                        <button type="button" class="btn-num">8</button>
-                        <button type="button" class="btn-num">9</button>
-                        <button type="button" id="btn-clear">C</button>
-                        <button type="button" class="btn-num">0</button>
-                        <button type="button" id="btn-backspace"><i class="bi bi-backspace"></i></button>
-                        <button type="button" id="btn-record-submit" class="btn-submit-record">บันทึกข้อมูล</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- OCR Choice Modal -->
-    <div class="modal fade" id="ocrChoiceModal" tabindex="-1" aria-labelledby="ocrChoiceModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="ocrChoiceModalLabel">เลือกวิธีอ่านค่าตัวเลข</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body d-grid gap-3">
-                    <button type="button" id="btn-ocr-camera" class="btn btn-primary btn-lg">
-                        <i class="bi bi-camera-fill me-2"></i> ถ่ายรูปใหม่
-                    </button>
-                    <button type="button" id="btn-ocr-upload" class="btn btn-secondary btn-lg">
-                        <i class="bi bi-images me-2"></i> เลือกไฟล์รูป
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Confirmation Modal -->
-    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="confirmModalLabel">ยืนยันการบันทึก</h5>
+                    <h5 class="modal-title" id="calculatorModalLabel"><i class="bi bi-calculator"></i> ป้อนเลขมิเตอร์ปัจจุบัน</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    คุณต้องการยืนยันการบันทึกข้อมูลใช่หรือไม่?
+                    <div id="calculator-display" class="calculator-display"></div>
+                     <div class="d-flex justify-content-between align-items-center mb-3">
+                        <label for="ocr-file-input" class="btn btn-outline-info">
+                            <i class="bi bi-file-earmark-image"></i> เลือกรูป
+                        </label>
+                        <input type="file" id="ocr-file-input" accept="image/*" capture="environment">
+                        <p id="ocr-status" class="mb-0 text-center flex-grow-1">หรือใช้ OCR อ่านค่า</p>
+                        <label for="ocr-file-input-camera" class="btn btn-outline-info">
+                            <i class="bi bi-camera-fill"></i> ถ่ายรูป
+                        </label>
+                         <input type="file" id="ocr-file-input-camera" accept="image/*" capture="camera" style="display: none;">
+                    </div>
+                    <div class="calculator">
+                        <div class="row g-2">
+                            <div class="col-4"><button class="btn btn-light w-100 calc-btn" data-value="1">1</button></div>
+                            <div class="col-4"><button class="btn btn-light w-100 calc-btn" data-value="2">2</button></div>
+                            <div class="col-4"><button class="btn btn-light w-100 calc-btn" data-value="3">3</button></div>
+                            <div class="col-4"><button class="btn btn-light w-100 calc-btn" data-value="4">4</button></div>
+                            <div class="col-4"><button class="btn btn-light w-100 calc-btn" data-value="5">5</button></div>
+                            <div class="col-4"><button class="btn btn-light w-100 calc-btn" data-value="6">6</button></div>
+                            <div class="col-4"><button class="btn btn-light w-100 calc-btn" data-value="7">7</button></div>
+                            <div class="col-4"><button class="btn btn-light w-100 calc-btn" data-value="8">8</button></div>
+                            <div class="col-4"><button class="btn btn-light w-100 calc-btn" data-value="9">9</button></div>
+                            <div class="col-4"><button class="btn btn-light w-100 calc-btn" data-value="0">0</button></div>
+                            <div class="col-8"><button class="btn btn-warning w-100" id="calc-delete"><i class="bi bi-backspace-fill"></i> ลบ</button></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="btn-confirm-cancel">ยกเลิก</button>
-                    <button type="button" class="btn btn-primary" id="btn-confirm-ok">ตกลง</button>
+                    <button type="button" class="btn btn-primary w-100" id="save-reading-btn">
+                        <i class="bi bi-save-fill"></i> บันทึกข้อมูล
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Alert Modal -->
     <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="alertModalLabel">แจ้งเตือน</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="alertModalBody">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">ตกลง</button>
+                <div class="modal-body text-center p-4">
+                    <h3 class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i></h3>
+                    <p class="fs-5" id="alert-message">กรุณาเช็คข้อมูลอีกครั้ง!</p>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">ปิด</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- OCR Processing Modal -->
-    <div class="modal fade" id="processingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="processingModalLabel" aria-hidden="true">
+    <!-- Confirm Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-body text-center p-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-3 mb-0" id="processing-status">กำลังประมวลผลรูปภาพ...</p>
+                     <h3 class="text-primary"><i class="bi bi-question-circle-fill"></i></h3>
+                    <p class="fs-5">ยืนยันการบันทึกข้อมูลใช่หรือไม่?</p>
+                    <button type="button" class="btn btn-secondary" id="confirm-cancel-btn">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary" id="confirm-ok-btn">ตกลง</button>
                 </div>
             </div>
         </div>
     </div>
 
-
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- QR Code Scanner Library -->
+    <!-- HTML5 QR Code Scanner -->
     <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
     <!-- Tesseract.js for OCR -->
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
 
+
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // State variables
-            let scannedMeterId = null;
-            const PREVIOUS_READING = 1562;
-            
-            // DOM Elements
-            const initialButtons = document.getElementById('initial-buttons');
-            const btnScan = document.getElementById('btn-scan');
-            const btnManualInput = document.getElementById('btn-manual-input');
-            const manualInputForm = document.getElementById('manual-input-form');
-            const manualMeterIdInput = document.getElementById('manual-meter-id');
-            const qrReaderDiv = document.getElementById('qr-reader');
-            const infoSection = document.getElementById('info-section');
-            const btnOpenCalculator = document.getElementById('btn-open-calculator');
-            const calculatorDisplay = document.getElementById('calculator-display');
-            const resultSection = document.getElementById('result-section');
-            const recordButtonSection = document.getElementById('record-button-section');
-            const clearButtonSection = document.getElementById('clear-button-section');
-            const btnClearData = document.getElementById('btn-clear-data');
-            const processingStatus = document.getElementById('processing-status');
+        document.addEventListener('DOMContentLoaded', () => {
+            // Screen elements
+            const initialScreen = document.getElementById('initial-screen');
+            const scannerContainer = document.getElementById('scanner-container');
+            const userInfoScreen = document.getElementById('user-info-screen');
+            const resultScreen = document.getElementById('result-screen');
+
+            // Buttons
+            const scanBtn = document.getElementById('scan-btn');
+            const closeScannerBtn = document.getElementById('close-scanner-btn');
+            const manualSubmitBtn = document.getElementById('manual-submit-btn');
+            const recordBtn = document.getElementById('record-btn');
+            const saveReadingBtn = document.getElementById('save-reading-btn');
+            const confirmOkBtn = document.getElementById('confirm-ok-btn');
+            const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+            const resetBtn = document.getElementById('reset-btn');
 
             // Modals
-            const manualInputModal = new bootstrap.Modal(document.getElementById('manualInputModal'));
             const calculatorModal = new bootstrap.Modal(document.getElementById('calculatorModal'));
-            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
             const alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
-            const processingModal = new bootstrap.Modal(document.getElementById('processingModal'));
-            const ocrChoiceModal = new bootstrap.Modal(document.getElementById('ocrChoiceModal'));
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            
+            // Calculator elements
+            const calculatorDisplay = document.getElementById('calculator-display');
+            const calcDeleteBtn = document.getElementById('calc-delete');
 
-            // OCR Elements
+            // OCR elements
             const ocrFileInput = document.getElementById('ocr-file-input');
-            const ocrCameraInput = document.getElementById('ocr-camera-input');
-            const btnOcrCamera = document.getElementById('btn-ocr-camera');
-            const btnOcrUpload = document.getElementById('btn-ocr-upload');
-            
+            const ocrCameraInput = document.getElementById('ocr-file-input-camera');
+            const ocrStatus = document.getElementById('ocr-status');
+
             let html5QrCode;
-            let ocrWorker = null;
-            let isWorkerReady = false;
-            let isWorkerInitializing = false;
 
-            // Helper function to format date
-            const formatDateTime = (date) => {
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = String(date.getFullYear()).slice(-2);
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${day}/${month}/${year} ${hours}:${minutes}`;
-            };
-
-            const processMeterId = (meterId) => {
-                scannedMeterId = meterId;
-                initialButtons.style.display = 'none';
-                resultSection.classList.add('d-none');
-                clearButtonSection.classList.add('d-none');
-                recordButtonSection.classList.remove('d-none');
-                updateInitialInfo(scannedMeterId);
-                infoSection.classList.add('visible');
-            };
-
-            const onScanSuccess = (decodedText) => {
-                if (html5QrCode && html5QrCode.isScanning) {
-                    html5QrCode.stop().catch(err => console.error("Failed to stop QR Code scanning.", err));
-                }
-                qrReaderDiv.style.display = 'none';
-
+            // --- QR Code Scanner Logic ---
+            const onScanSuccess = (decodedText, decodedResult) => {
+                // Basic validation for 11-digit number
                 if (/^\d{11}$/.test(decodedText)) {
+                    console.log(`Scan result: ${decodedText}`, decodedResult);
+                    stopScanner();
                     processMeterId(decodedText);
-                } else {
-                    initialButtons.style.display = 'grid';
-                    showCustomAlert("QR Code ไม่ถูกต้อง ต้องเป็นหมายเลข 11 หลักเท่านั้น");
                 }
             };
-
-            const onScanError = (errorMessage) => {};
-
-            const updateInitialInfo = (meterId) => {
-                const now = new Date();
-                const lastMonth = new Date(new Date().setMonth(now.getMonth() - 1));
-                lastMonth.setHours(lastMonth.getHours() + 2);
-                document.getElementById('meter-id').textContent = meterId;
-                document.getElementById('user-name').textContent = 'อ.ทอง หลอมประโคน';
-                document.getElementById('user-address').textContent = '193/8 หมู่ที่ 9 ตำบลเสม็ด อำเภอเมืองบุรีรัมย์ จ.บุรีรัมย์ 31000';
-                document.getElementById('prev-date').textContent = formatDateTime(lastMonth);
-                document.getElementById('prev-reading').textContent = PREVIOUS_READING;
-                document.getElementById('recorder-name').textContent = 'นางสาว พรทิพย์ รุ่งเรืองดี';
-            };
-
-            const updateFinalInfo = (newReading) => {
-                const unitsUsed = newReading - PREVIOUS_READING;
-                document.getElementById('current-date').textContent = formatDateTime(new Date());
-                document.getElementById('current-reading').textContent = newReading;
-                document.getElementById('unit-used').textContent = unitsUsed;
-                resultSection.classList.remove('d-none');
-                clearButtonSection.classList.remove('d-none');
-                recordButtonSection.classList.add('d-none');
-            };
-
-            btnScan.addEventListener('click', () => {
-                initialButtons.style.display = 'none';
-                qrReaderDiv.style.display = 'block';
+            
+            const startScanner = () => {
+                initialScreen.style.display = 'none';
+                scannerContainer.style.display = 'block';
                 html5QrCode = new Html5Qrcode("qr-reader");
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError)
-                    .catch(() => {
-                        showCustomAlert("ไม่สามารถเข้าถึงกล้องได้");
-                        initialButtons.style.display = 'grid';
-                        qrReaderDiv.style.display = 'none';
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 }
+                    },
+                    onScanSuccess
+                ).catch(err => {
+                    console.error("Unable to start scanning.", err);
+                    alert("ไม่สามารถเปิดกล้องได้ กรุณาตรวจสอบการอนุญาต");
+                    showScreen('initial');
+                });
+            };
+
+            const stopScanner = () => {
+                 if (html5QrCode && html5QrCode.isScanning) {
+                    html5QrCode.stop().then(() => {
+                        console.log("QR Code scanning stopped.");
+                        scannerContainer.style.display = 'none';
+                    }).catch(err => {
+                        console.error("Failed to stop QR Code scanning.", err);
                     });
-            });
-            
-            btnManualInput.addEventListener('click', () => {
-                manualMeterIdInput.value = '';
-                manualInputModal.show();
+                }
+                scannerContainer.style.display = 'none';
+            };
+
+            scanBtn.addEventListener('click', startScanner);
+            closeScannerBtn.addEventListener('click', () => {
+                stopScanner();
+                showScreen('initial');
             });
 
-            manualInputForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const meterId = manualMeterIdInput.value;
-                if (/^\d{11}$/.test(meterId)) {
-                    manualInputModal.hide();
-                    processMeterId(meterId);
+
+            // --- Manual Input Logic ---
+            manualSubmitBtn.addEventListener('click', () => {
+                const manualInput = document.getElementById('manual-meter-input').value;
+                if (/^\d{11}$/.test(manualInput)) {
+                    processMeterId(manualInput);
                 } else {
-                    showCustomAlert("กรุณากรอกหมายเลขมิเตอร์ 11 หลักให้ถูกต้อง");
+                    document.getElementById('alert-message').textContent = 'หมายเลขมิเตอร์ต้องเป็นตัวเลข 11 หลัก';
+                    alertModal.show();
                 }
             });
 
-            const showCustomAlert = (message) => {
-                document.getElementById('alertModalBody').textContent = message;
-                alertModal.show();
+            // --- Main Processing Logic ---
+            const processMeterId = (meterId) => {
+                // Populate user info
+                document.getElementById('meter-id').textContent = meterId;
+                
+                // Set last reading date to one month ago
+                const lastDate = new Date();
+                lastDate.setMonth(lastDate.getMonth() - 1);
+                document.getElementById('last-date').textContent = lastDate.toLocaleDateString('th-TH', {
+                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                
+                // Show user info screen
+                showScreen('userInfo');
+            };
+
+            const showScreen = (screenName) => {
+                initialScreen.style.display = 'none';
+                userInfoScreen.style.display = 'none';
+                resultScreen.style.display = 'none';
+                scannerContainer.style.display = 'none';
+
+                if (screenName === 'initial') initialScreen.style.display = 'block';
+                if (screenName === 'userInfo') userInfoScreen.style.display = 'block';
+                if (screenName === 'result') resultScreen.style.display = 'block';
             };
             
-            btnClearData.addEventListener('click', () => {
-                location.reload();
-            });
-
-            btnOpenCalculator.addEventListener('click', () => {
-                calculatorDisplay.value = '';
+            // --- Calculator Logic ---
+            recordBtn.addEventListener('click', () => {
+                calculatorDisplay.textContent = '';
                 calculatorModal.show();
-                if (!isWorkerReady) {
-                    initializeOcrWorker();
-                }
             });
 
-            document.querySelectorAll('.btn-num').forEach(button => {
-                button.addEventListener('click', () => {
-                    calculatorDisplay.value += button.textContent;
+            document.querySelectorAll('.calc-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    if (calculatorDisplay.textContent.length < 10) { // Limit input length
+                         calculatorDisplay.textContent += e.target.dataset.value;
+                    }
                 });
             });
 
-            document.getElementById('btn-clear').addEventListener('click', () => {
-                calculatorDisplay.value = '';
+            calcDeleteBtn.addEventListener('click', () => {
+                calculatorDisplay.textContent = calculatorDisplay.textContent.slice(0, -1);
             });
             
-            document.getElementById('btn-backspace').addEventListener('click', () => {
-                calculatorDisplay.value = calculatorDisplay.value.slice(0, -1);
-            });
-
-            document.getElementById('btn-record-submit').addEventListener('click', () => {
-                const newReading = parseInt(calculatorDisplay.value, 10);
-                if (isNaN(newReading) || calculatorDisplay.value === '') {
-                    showCustomAlert('กรุณาป้อนตัวเลข');
-                    return;
-                }
-                const unitsUsed = newReading - PREVIOUS_READING;
-                if (unitsUsed < 50) {
-                    showCustomAlert('กรุณาเช็คข้อมูลอีกครั้ง!');
-                    return;
-                }
-                confirmModal.show();
-            });
-            
-            document.getElementById('btn-confirm-cancel').addEventListener('click', () => {
-                confirmModal.hide();
-                calculatorDisplay.value = '';
-            });
-
-            document.getElementById('btn-confirm-ok').addEventListener('click', () => {
-                const newReading = parseInt(calculatorDisplay.value, 10);
-                updateFinalInfo(newReading);
-                confirmModal.hide();
-                calculatorModal.hide();
-            });
-
             // --- OCR Logic ---
-
-            const initializeOcrWorker = async () => {
-                if (isWorkerReady || isWorkerInitializing) return;
-
-                isWorkerInitializing = true;
-                processingModal.show();
-                processingStatus.textContent = 'กำลังเตรียมระบบสแกน...';
-
-                try {
-                    const worker = await Tesseract.createWorker('eng', 1, {
-                        logger: m => {
-                            const progress = Math.round(m.progress * 100);
-                            if (m.status.includes('loading')) {
-                                processingStatus.textContent = `กำลังโหลดข้อมูล... (${progress}%)`;
-                            }
-                        }
-                    });
-                    await worker.setParameters({
-                        tessedit_char_whitelist: '0123456789',
-                    });
-                    ocrWorker = worker;
-                    isWorkerReady = true;
-                } catch (err) {
-                    console.error('Failed to initialize OCR worker', err);
-                    showCustomAlert('ไม่สามารถเริ่มต้นระบบสแกนได้ กรุณาตรวจสอบอินเทอร์เน็ต');
-                } finally {
-                    isWorkerInitializing = false;
-                    processingModal.hide();
-                }
-            };
-            
-            btnOcrCamera.addEventListener('click', () => {
-                ocrChoiceModal.hide();
-                ocrCameraInput.click();
-            });
-
-            btnOcrUpload.addEventListener('click', () => {
-                ocrChoiceModal.hide();
-                ocrFileInput.click();
-            });
-
-            const preprocessImage = (image) => {
-                const canvas = document.getElementById('image-processing-canvas');
-                const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-                const MAX_WIDTH = 1024;
-                const scale = image.width > MAX_WIDTH ? MAX_WIDTH / image.width : 1;
-                canvas.width = image.width * scale;
-                canvas.height = image.height * scale;
-
-                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imageData.data;
-
-                for (let i = 0; i < data.length; i += 4) {
-                    // Grayscale
-                    const avg = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-                    data[i] = avg; 
-                    data[i + 1] = avg;
-                    data[i + 2] = avg;
-                }
-                ctx.putImageData(imageData, 0, 0);
-                return canvas;
-            };
-
-            const handleOcrImage = async (event) => {
-                const file = event.target.files[0];
+            const processOcr = (file) => {
                 if (!file) return;
 
-                if (!isWorkerReady) {
-                    await initializeOcrWorker();
-                    if (!isWorkerReady) { event.target.value = ''; return; }
-                }
-
-                const reader = new FileReader();
-                reader.onerror = () => showCustomAlert('ไม่สามารถอ่านไฟล์รูปภาพได้');
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onerror = () => showCustomAlert('ไฟล์ที่เลือกไม่ใช่รูปภาพที่ถูกต้อง');
-                    img.onload = async () => {
-                        processingModal.show();
-                        try {
-                            const processedCanvas = preprocessImage(img);
-                            processingStatus.textContent = 'กำลังสแกน...';
-                            
-                            const { data: { text } } = await ocrWorker.recognize(processedCanvas);
-
-                            const numbers = text.replace(/\D/g, '');
-                            if (numbers) {
-                                calculatorDisplay.value = numbers;
-                            } else {
-                                showCustomAlert('ไม่พบตัวเลขในรูปภาพ กรุณาลองถ่ายให้ชัดขึ้น');
-                            }
-                        } catch (error) {
-                            console.error('OCR Error:', error);
-                            showCustomAlert('เกิดข้อผิดพลาดในการสแกนรูปภาพ');
-                        } finally {
-                            processingModal.hide();
-                            event.target.value = ''; // Reset file input
-                        }
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
+                ocrStatus.textContent = 'กำลังประมวลผล...';
+                Tesseract.recognize(
+                    file,
+                    'eng', // Use 'eng' for recognizing digits
+                    { logger: m => console.log(m) }
+                ).then(({ data: { text } }) => {
+                    const numbers = text.replace(/\D/g, ''); // Remove all non-digit characters
+                    if(numbers) {
+                        calculatorDisplay.textContent = numbers;
+                        ocrStatus.textContent = 'OCR สำเร็จ!';
+                    } else {
+                        ocrStatus.textContent = 'ไม่พบตัวเลขในภาพ';
+                    }
+                    // Reset status after a few seconds
+                    setTimeout(() => ocrStatus.textContent = 'หรือใช้ OCR อ่านค่า', 3000);
+                }).catch(err => {
+                    console.error(err);
+                    ocrStatus.textContent = 'OCR ผิดพลาด';
+                    setTimeout(() => ocrStatus.textContent = 'หรือใช้ OCR อ่านค่า', 3000);
+                });
             };
 
-            ocrFileInput.addEventListener('change', handleOcrImage);
-            ocrCameraInput.addEventListener('change', handleOcrImage);
+            ocrFileInput.addEventListener('change', (e) => processOcr(e.target.files[0]));
+            ocrCameraInput.addEventListener('change', (e) => processOcr(e.target.files[0]));
+
+
+            // --- Save and Validation Logic ---
+            saveReadingBtn.addEventListener('click', () => {
+                const currentValue = parseInt(calculatorDisplay.textContent, 10);
+                const lastValue = 1562;
+
+                if (isNaN(currentValue)) {
+                    document.getElementById('alert-message').textContent = 'กรุณาป้อนข้อมูลให้ถูกต้อง';
+                    alertModal.show();
+                    return;
+                }
+                
+                const usage = currentValue - lastValue;
+
+                if (usage < 50) {
+                     document.getElementById('alert-message').textContent = 'หน่วยใช้น้ำน้อยกว่า 50 กรุณาเช็คข้อมูลอีกครั้ง!';
+                    alertModal.show();
+                } else {
+                    confirmModal.show();
+                }
+            });
+
+            confirmCancelBtn.addEventListener('click', () => {
+                confirmModal.hide();
+                calculatorDisplay.textContent = '';
+            });
+
+            confirmOkBtn.addEventListener('click', () => {
+                confirmModal.hide();
+                calculatorModal.hide();
+
+                const currentValue = parseInt(calculatorDisplay.textContent, 10);
+                const lastValue = 1562;
+                const usage = currentValue - lastValue;
+
+                // Populate result screen
+                const today = new Date();
+                document.getElementById('current-date').textContent = today.toLocaleDateString('th-TH', {
+                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                document.getElementById('current-reading').textContent = currentValue;
+                document.getElementById('usage').textContent = `${usage} หน่วย`;
+
+                showScreen('result');
+            });
+            
+            // --- Reset Logic ---
+            resetBtn.addEventListener('click', () => {
+                location.reload();
+            });
         });
     </script>
+
 </body>
 </html>
-
