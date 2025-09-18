@@ -600,7 +600,7 @@
                     </tr>
                     <tr class="result-row">
                         <th>พิกัดสถานที่</th>
-                        <td id="location-gps" class="text-primary">${locationCoordinates ? `${locationCoordinates.lat}, ${locationCoordinates.long}` : 'ไม่มีข้อมูล'}</td>
+                        <td id="location-gps" class="text-primary">${(locationCoordinates && typeof locationCoordinates === 'object') ? `${locationCoordinates.lat}, ${locationCoordinates.long}` : (locationCoordinates || 'ไม่มีข้อมูล')}</td>
                     </tr>
                     <tr class="result-row">
                         <th>หน่วยน้ำที่ใช้</th>
