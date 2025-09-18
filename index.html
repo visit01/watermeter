@@ -627,6 +627,7 @@
                 const usage = currentValue - lastValue;
 
                 const today = new Date();
+                const timestamp = today.getTime();
                 const formattedToday = today.toLocaleDateString('th-TH', {
                     year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
                 });
@@ -648,7 +649,7 @@
                 // Print result data to console as JSON
                 const resultData = {
                     "หมายเลขมิเตอร์น้ำ": document.getElementById('meter-id').textContent,
-                    "วันที่จดวันนี้": formattedToday,
+                    "วันที่จดวันนี้": timestamp,
                     "เลขมิเตอร์วันนี้": currentValue,
                     "หน่วยน้ำที่ใช้": usage,
                     "พิกัดมิเตอร์น้ำ": meterCoordinates,
