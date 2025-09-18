@@ -595,6 +595,11 @@
                             }
                         }
                     });
+
+                    // Set the worker to only recognize digits for better accuracy
+                    await worker.setParameters({
+                        tessedit_char_whitelist: '0123456789',
+                    });
                     
                     const { data: { text } } = await worker.recognize(file);
                     await worker.terminate();
