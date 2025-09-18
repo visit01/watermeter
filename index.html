@@ -581,15 +581,39 @@
                 recordBtn.style.display = 'none';
                 resetBtn.style.display = 'block';
 
-                // Print result data to console as JSON
-                const resultData = {
+                // Create json (data1)
+                const data1 = {
                     "หมายเลขมิเตอร์น้ำ": document.getElementById('meter-id').textContent,
                     "วันที่จดวันนี้": timestamp,
                     "เลขมิเตอร์วันนี้": currentValue,
                     "หน่วยน้ำที่ใช้": usage,
                     "รูปมิเตอร์น้ำ": meterPhotoBase64
                 };
-                console.log(JSON.stringify(resultData, null, 2));
+
+                // Send json (data1) to URL via GET Method
+                const targetUrl = 'http://128.199.172.248:1880/watermeter';
+                const urlWithParams = `${targetUrl}?data=${encodeURIComponent(JSON.stringify(data1))}`;
+
+                fetch(urlWithParams, { method: 'GET' })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        console.log('Server response received.');
+                        return response.text(); 
+                    })
+                    .then(data => {
+                        console.log('Response from server:', data);
+                    })
+                    .catch(error => {
+                        console.error('There was a problem with the fetch operation:', error);
+                        document.getElementById('alert-message').textContent = 'ส่งข้อมูลไปยังเซิร์ฟเวอร์ไม่สำเร็จ!';
+                        alertModal.show();
+                    });
+
+                // Print json (data1) in console
+                console.log("--- JSON Data (data1) Sent to Server ---");
+                console.log(JSON.stringify(data1, null, 2));
             });
             
             // --- Reset Logic ---
