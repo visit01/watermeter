@@ -152,16 +152,11 @@
                     </table>
                 </div>
                 <div class="card-footer text-center p-3">
-                     <button id="record-btn" class="btn btn-success btn-lg w-100 mb-3">
+                     <button id="record-btn" class="btn btn-success btn-lg w-100">
                         <i class="bi bi-pencil-square"></i> บันทึกเลขมิเตอร์น้ำ
                     </button>
-                    <div id="photo-section">
-                        <label for="meter-photo-input" class="btn btn-info w-100">
-                            <i class="bi bi-camera-fill"></i> ถ่ายรูปมิเตอร์น้ำ
-                        </label>
-                        <input type="file" id="meter-photo-input" accept="image/*" capture="camera">
-                        <p id="photo-status" class="text-muted mt-2 mb-0">ยังไม่ได้ถ่ายรูป</p>
-                    </div>
+                     <!-- Hidden input for meter photo, triggered by the record button -->
+                    <input type="file" id="meter-photo-input" accept="image/*" capture="camera">
                 </div>
             </div>
         </div>
@@ -183,20 +178,20 @@
                                 <th>เลขมิเตอร์วันนี้</th>
                                 <td id="current-reading"></td>
                             </tr>
-                            <tr>
-                                <th>หน่วยน้ำที่ใช้</th>
-                                <td id="usage" class="fw-bold text-primary fs-5"></td>
-                            </tr>
                              <tr>
-                                <th>พิกัดมิเตอร์น้ำ</th>
-                                <td id="meter-gps">กำลังค้นหา...</td>
-                            </tr>
-                            <tr>
                                 <th>รูปมิเตอร์น้ำ</th>
                                 <td>
                                     <img id="meter-photo-thumbnail" src="" class="img-thumbnail" style="max-width: 100px; display: none;">
                                     <span id="no-photo-text">ไม่ได้ถ่ายรูป</span>
                                 </td>
+                            </tr>
+                            <tr>
+                                <th>พิกัดสถานที่</th>
+                                <td id="location-gps">กำลังค้นหา...</td>
+                            </tr>
+                            <tr>
+                                <th>หน่วยน้ำที่ใช้</th>
+                                <td id="usage" class="fw-bold text-primary fs-5"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -317,7 +312,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- State Variables ---
             let meterPhotoBase64 = null;
-            let meterCoordinates = null;
+            let locationCoordinates = null;
             let cropper;
             let html5QrCode;
 
@@ -355,8 +350,7 @@
             const ocrStatus = document.getElementById('ocr-status');
             const imageToCrop = document.getElementById('image-to-crop');
             const meterPhotoInput = document.getElementById('meter-photo-input');
-            const photoStatus = document.getElementById('photo-status');
-            const meterGpsEl = document.getElementById('meter-gps');
+            const locationGpsEl = document.getElementById('location-gps');
             const meterPhotoThumbnailEl = document.getElementById('meter-photo-thumbnail');
             const noPhotoTextEl = document.getElementById('no-photo-text');
 
@@ -412,7 +406,7 @@
                 document.getElementById('meter-id').textContent = meterId;
                 const lastDate = new Date();
                 lastDate.setMonth(lastDate.getMonth() - 1);
-                document.getElementById('last-date').textContent = lastDate.toLocaleDateString('th-TH', {
+                document.getElementById('last-date').textContent = lastDate.toLocaleString('th-TH', {
                     year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
                 });
                 showScreen('userInfo');
@@ -429,12 +423,32 @@
                 if (screenName === 'result') resultScreen.style.display = 'block';
             };
             
-            // --- Calculator Logic ---
+            // --- NEW RECORDING FLOW ---
             recordBtn.addEventListener('click', () => {
-                calculatorDisplay.textContent = '';
-                calculatorModal.show();
+                 // Trigger the hidden file input for the camera
+                meterPhotoInput.click();
             });
 
+            meterPhotoInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    // Start image compression and GPS fetch simultaneously
+                    compressAndEncodeImage(file); 
+                    getGpsLocation().then(coords => {
+                        locationCoordinates = coords;
+                    }).catch(error => {
+                        locationCoordinates = `ผิดพลาด: ${error}`;
+                    });
+                    
+                    // Clear display and show calculator
+                    calculatorDisplay.textContent = '';
+                    calculatorModal.show();
+                }
+                 // Reset the file input value to allow taking a new picture if the user cancels
+                e.target.value = '';
+            });
+
+            // --- Calculator Logic ---
             document.querySelectorAll('.calc-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
                     if (calculatorDisplay.textContent.length < 10) {
@@ -519,18 +533,10 @@
                 ocrStatus.textContent = 'ใช้ OCR อ่านค่า';
             }
             
-            // --- Meter Photo & GPS Logic ---
-            meterPhotoInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    photoStatus.innerHTML = 'กำลังบีบอัดรูป... <div class="spinner-border spinner-border-sm" role="status"></div>';
-                    compressAndEncodeImage(file);
-                }
-            });
-
+            // --- Meter Photo Compression & GPS Logic ---
             function compressAndEncodeImage(file) {
-                const MAX_WIDTH = 1024; // Max width for resizing
-                const TARGET_SIZE_KB = 100; // Target size in KB
+                const MAX_WIDTH = 1024; 
+                const TARGET_SIZE_KB = 100;
                 const reader = new FileReader();
 
                 reader.onload = (e) => {
@@ -549,16 +555,12 @@
                         let dataUrl;
                         do {
                             dataUrl = canvas.toDataURL('image/jpeg', quality);
-                            // Base64 string size is roughly 4/3 of the original data size.
                             const sizeKB = (dataUrl.length * (3/4)) / 1024;
-                            if (sizeKB <= TARGET_SIZE_KB) {
-                                break;
-                            }
+                            if (sizeKB <= TARGET_SIZE_KB) break;
                             quality -= 0.1;
                         } while (quality > 0.1);
                         
                         meterPhotoBase64 = dataUrl;
-                        photoStatus.innerHTML = `ถ่ายรูปแล้ว <i class="bi bi-check-circle-fill text-success"></i>`;
                     };
                     img.src = e.target.result;
                 };
@@ -606,22 +608,12 @@
                 calculatorDisplay.textContent = '';
             });
 
-            confirmOkBtn.addEventListener('click', async () => {
+            confirmOkBtn.addEventListener('click', () => {
                 confirmModal.hide();
                 calculatorModal.hide();
                 
-                showScreen('result'); // Show result screen immediately
-
-                // Fetch GPS
-                try {
-                    meterCoordinates = await getGpsLocation();
-                    meterGpsEl.textContent = meterCoordinates;
-                } catch (error) {
-                    meterGpsEl.textContent = `ผิดพลาด: ${error}`;
-                    meterCoordinates = `ผิดพลาด: ${error}`;
-                }
-
-                // Prepare final data
+                showScreen('result'); 
+                
                 const currentValue = parseInt(calculatorDisplay.textContent, 10);
                 const lastValue = 1562;
                 const usage = currentValue - lastValue;
@@ -636,6 +628,7 @@
                 document.getElementById('current-date').textContent = formattedToday;
                 document.getElementById('current-reading').textContent = currentValue;
                 document.getElementById('usage').textContent = `${usage} หน่วย`;
+                locationGpsEl.textContent = locationCoordinates || 'ไม่มีข้อมูล';
 
                 if (meterPhotoBase64) {
                     meterPhotoThumbnailEl.src = meterPhotoBase64;
@@ -652,11 +645,10 @@
                     "วันที่จดวันนี้": timestamp,
                     "เลขมิเตอร์วันนี้": currentValue,
                     "หน่วยน้ำที่ใช้": usage,
-                    "พิกัดมิเตอร์น้ำ": meterCoordinates,
-                    "ถ่ายรูปมิเตอร์น้ำ": meterPhotoBase64
+                    "รูปมิเตอร์น้ำ": meterPhotoBase64,
+                    "พิกัดสถานที่": locationCoordinates
                 };
                 console.log(JSON.stringify(resultData, null, 2));
-
             });
             
             // --- Reset Logic ---
