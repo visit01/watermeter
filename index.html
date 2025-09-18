@@ -49,6 +49,14 @@
             transform: translateY(-3px);
             box-shadow: 0 7px 20px rgba(0, 123, 255, 0.3);
         }
+        #btn-manual-input {
+            background-color: #0dcaf0;
+            border-color: #0dcaf0;
+            box-shadow: 0 4px 15px rgba(13, 202, 240, 0.2);
+        }
+         #btn-manual-input:hover, #btn-manual-input:focus {
+            box-shadow: 0 7px 20px rgba(13, 202, 240, 0.3);
+        }
         #btn-open-calculator {
              background-color: #198754;
              border-color: #198754;
@@ -186,10 +194,13 @@
             <h3>ระบบจดมาตรน้ำอัจฉริยะ</h3>
         </div>
 
-        <!-- Scan Button and QR Reader -->
-        <div class="mt-4">
+        <!-- Scan/Input Buttons -->
+        <div id="initial-buttons" class="mt-4 d-grid gap-3">
             <button id="btn-scan" class="btn btn-primary w-100 btn-scan">
-                <i class="bi bi-qr-code-scan me-2"></i> ผู้ใช้น้ำ
+                <i class="bi bi-qr-code-scan me-2"></i> สแกนผู้ใช้น้ำ
+            </button>
+             <button id="btn-manual-input" class="btn btn-info w-100 btn-scan text-white">
+                <i class="bi bi-keyboard me-2"></i> ป้อนข้อมูลผู้ใช้น้ำ
             </button>
         </div>
         <div id="qr-reader"></div>
@@ -237,7 +248,30 @@
                 </button>
             </div>
         </div>
+    </div>
 
+    <!-- Manual Input Modal -->
+    <div class="modal fade" id="manualInputModal" tabindex="-1" aria-labelledby="manualInputModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="manualInputModalLabel">ป้อนหมายเลขมิเตอร์น้ำ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="manual-input-form">
+                        <div class="mb-3">
+                            <label for="manual-meter-id" class="form-label">หมายเลขมิเตอร์น้ำ (11 หลัก)</label>
+                            <input type="text" class="form-control form-control-lg" id="manual-meter-id" placeholder="กรอกตัวเลข 11 หลัก" inputmode="numeric" pattern="\d{11}" maxlength="11" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary" form="manual-input-form">ตกลง</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Calculator Modal -->
@@ -245,6 +279,15 @@
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
                 <div class="modal-body modal-body-calculator">
+                    <!-- Hidden file inputs for OCR -->
+                    <input type="file" id="ocr-file-input" class="d-none" accept="image/*">
+                    <input type="file" id="ocr-camera-input" class="d-none" accept="image/*" capture="environment">
+
+                    <div class="p-2 border-bottom">
+                        <button type="button" id="btn-ocr-scan" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#ocrChoiceModal">
+                            <i class="bi bi-camera"></i> สแกนเลขจากภาพ
+                        </button>
+                    </div>
                     <input type="text" id="calculator-display" class="form-control" readonly placeholder="0">
                     <div class="calculator-keys">
                         <button type="button" class="btn-num">1</button>
@@ -266,6 +309,26 @@
         </div>
     </div>
     
+    <!-- OCR Choice Modal -->
+    <div class="modal fade" id="ocrChoiceModal" tabindex="-1" aria-labelledby="ocrChoiceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ocrChoiceModalLabel">เลือกวิธีสแกน</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body d-grid gap-3">
+                    <button type="button" id="btn-ocr-camera" class="btn btn-primary btn-lg">
+                        <i class="bi bi-camera-fill me-2"></i> ถ่ายภาพ
+                    </button>
+                    <button type="button" id="btn-ocr-upload" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-images me-2"></i> เลือกจากอัลบั้ม
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Confirmation Modal -->
     <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -302,20 +365,40 @@
         </div>
     </div>
 
+    <!-- OCR Processing Modal -->
+    <div class="modal fade" id="processingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="processingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 mb-0" id="processing-status">กำลังประมวลผลรูปภาพ...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- QR Code Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+    <!-- Tesseract.js for OCR -->
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // State variables
             let scannedMeterId = null;
             const PREVIOUS_READING = 1562;
-
+            
             // DOM Elements
+            const initialButtons = document.getElementById('initial-buttons');
             const btnScan = document.getElementById('btn-scan');
+            const btnManualInput = document.getElementById('btn-manual-input');
+            const manualInputForm = document.getElementById('manual-input-form');
+            const manualMeterIdInput = document.getElementById('manual-meter-id');
             const qrReaderDiv = document.getElementById('qr-reader');
             const infoSection = document.getElementById('info-section');
             const btnOpenCalculator = document.getElementById('btn-open-calculator');
@@ -324,11 +407,21 @@
             const recordButtonSection = document.getElementById('record-button-section');
             const clearButtonSection = document.getElementById('clear-button-section');
             const btnClearData = document.getElementById('btn-clear-data');
+            const processingStatus = document.getElementById('processing-status');
 
             // Modals
+            const manualInputModal = new bootstrap.Modal(document.getElementById('manualInputModal'));
             const calculatorModal = new bootstrap.Modal(document.getElementById('calculatorModal'));
             const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
             const alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
+            const processingModal = new bootstrap.Modal(document.getElementById('processingModal'));
+            const ocrChoiceModal = new bootstrap.Modal(document.getElementById('ocrChoiceModal'));
+
+            // OCR Elements
+            const ocrFileInput = document.getElementById('ocr-file-input');
+            const ocrCameraInput = document.getElementById('ocr-camera-input');
+            const btnOcrCamera = document.getElementById('btn-ocr-camera');
+            const btnOcrUpload = document.getElementById('btn-ocr-upload');
 
             let html5QrCode;
 
@@ -342,44 +435,36 @@
                 return `${day}/${month}/${year} ${hours}:${minutes}`;
             };
 
-            // QR Code Success Callback
+            const processMeterId = (meterId) => {
+                scannedMeterId = meterId;
+                initialButtons.style.display = 'none';
+                resultSection.classList.add('d-none');
+                clearButtonSection.classList.add('d-none');
+                recordButtonSection.classList.remove('d-none');
+                updateInitialInfo(scannedMeterId);
+                infoSection.classList.add('visible');
+            };
+
             const onScanSuccess = (decodedText, decodedResult) => {
-                console.log(`Scan result: ${decodedText}`, decodedResult);
-                
                 html5QrCode.stop().then(() => {
                     qrReaderDiv.style.display = 'none';
-                    btnScan.style.display = 'block';
-                    console.log("QR Code scanning stopped.");
                 }).catch(err => {
                     console.error("Failed to stop QR Code scanning.", err);
                 });
-                
                 if (/^\d{11}$/.test(decodedText)) {
-                    scannedMeterId = decodedText;
-                    
-                    // Reset UI for new scan
-                    resultSection.classList.add('d-none');
-                    clearButtonSection.classList.add('d-none');
-                    recordButtonSection.classList.remove('d-none');
-
-                    updateInitialInfo(scannedMeterId);
-                    infoSection.classList.add('visible');
+                    processMeterId(decodedText);
                 } else {
+                    initialButtons.style.display = 'grid';
                     showCustomAlert("QR Code ไม่ถูกต้อง ต้องเป็นหมายเลข 11 หลักเท่านั้น");
                 }
             };
 
-            // QR Code Error Callback
-            const onScanError = (errorMessage) => {
-                // handle scan error, usually ignore it.
-            };
+            const onScanError = (errorMessage) => {};
 
-            // Update UI with initial data after scan
             const updateInitialInfo = (meterId) => {
                 const now = new Date();
                 const lastMonth = new Date(new Date().setMonth(now.getMonth() - 1));
                 lastMonth.setHours(lastMonth.getHours() + 2);
-
                 document.getElementById('meter-id').textContent = meterId;
                 document.getElementById('user-name').textContent = 'อ.ทอง หลอมประโคน';
                 document.getElementById('user-address').textContent = '193/8 หมู่ที่ 9 ตำบลเสม็ด อำเภอเมืองบุรีรัมย์ จ.บุรีรัมย์ 31000';
@@ -388,41 +473,54 @@
                 document.getElementById('recorder-name').textContent = 'นางสาว พรทิพย์ รุ่งเรืองดี';
             };
 
-            // Update UI with final recorded data
             const updateFinalInfo = (newReading) => {
                 const unitsUsed = newReading - PREVIOUS_READING;
                 document.getElementById('current-date').textContent = formatDateTime(new Date());
                 document.getElementById('current-reading').textContent = newReading;
                 document.getElementById('unit-used').textContent = unitsUsed;
-
-                // Show result and clear button, hide record button
                 resultSection.classList.remove('d-none');
                 clearButtonSection.classList.remove('d-none');
                 recordButtonSection.classList.add('d-none');
             };
 
-            // Start QR Scanner
             btnScan.addEventListener('click', () => {
+                initialButtons.style.display = 'none';
                 qrReaderDiv.style.display = 'block';
-                btnScan.style.display = 'none';
-                
                 html5QrCode = new Html5Qrcode("qr-reader");
                 const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
+                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError)
+                    .catch(err => {
+                        showCustomAlert("ไม่สามารถเข้าถึงกล้องได้");
+                        initialButtons.style.display = 'grid';
+                        qrReaderDiv.style.display = 'none';
+                    });
             });
             
-            // Show custom alert
+            btnManualInput.addEventListener('click', () => {
+                manualMeterIdInput.value = '';
+                manualInputModal.show();
+            });
+
+            manualInputForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const meterId = manualMeterIdInput.value;
+                if (/^\d{11}$/.test(meterId)) {
+                    manualInputModal.hide();
+                    processMeterId(meterId);
+                } else {
+                    showCustomAlert("กรุณากรอกหมายเลขมิเตอร์ 11 หลักให้ถูกต้อง");
+                }
+            });
+
             const showCustomAlert = (message) => {
                 document.getElementById('alertModalBody').textContent = message;
                 alertModal.show();
             };
             
-            // Clear Data and Reload Button
             btnClearData.addEventListener('click', () => {
                 location.reload();
             });
 
-            // Calculator logic
             btnOpenCalculator.addEventListener('click', () => {
                 calculatorDisplay.value = '';
                 calculatorModal.show();
@@ -438,32 +536,27 @@
                 calculatorDisplay.value = '';
             });
             
-             document.getElementById('btn-backspace').addEventListener('click', () => {
+            document.getElementById('btn-backspace').addEventListener('click', () => {
                 calculatorDisplay.value = calculatorDisplay.value.slice(0, -1);
             });
 
             document.getElementById('btn-record-submit').addEventListener('click', () => {
                 const newReading = parseInt(calculatorDisplay.value, 10);
-
                 if (isNaN(newReading) || calculatorDisplay.value === '') {
                     showCustomAlert('กรุณาป้อนตัวเลข');
                     return;
                 }
-                
                 const unitsUsed = newReading - PREVIOUS_READING;
-
                 if (unitsUsed < 50) {
                     showCustomAlert('กรุณาเช็คข้อมูลอีกครั้ง!');
                     return;
                 }
-
                 confirmModal.show();
             });
             
-            // Confirmation logic
             document.getElementById('btn-confirm-cancel').addEventListener('click', () => {
                 confirmModal.hide();
-                calculatorDisplay.value = ''; // ล้างค่าใน input
+                calculatorDisplay.value = '';
             });
 
             document.getElementById('btn-confirm-ok').addEventListener('click', () => {
@@ -472,6 +565,57 @@
                 confirmModal.hide();
                 calculatorModal.hide();
             });
+
+            // --- OCR Logic ---
+            btnOcrCamera.addEventListener('click', () => {
+                ocrChoiceModal.hide();
+                // Directly trigger the camera input. This is more reliable on Safari.
+                ocrCameraInput.click();
+            });
+
+            btnOcrUpload.addEventListener('click', () => {
+                ocrChoiceModal.hide();
+                // Directly trigger the file input.
+                ocrFileInput.click();
+            });
+
+            const handleOcrImage = async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                processingModal.show();
+
+                try {
+                    const worker = await Tesseract.createWorker('eng', 1, {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                processingStatus.textContent = `กำลังสแกน... (${Math.round(m.progress * 100)}%)`;
+                            } else {
+                                processingStatus.textContent = `กำลังเตรียมไฟล์...`;
+                            }
+                        }
+                    });
+                    
+                    const { data: { text } } = await worker.recognize(file);
+                    await worker.terminate();
+
+                    const numbers = text.replace(/\D/g, ''); // Extract only digits
+                    if (numbers) {
+                        calculatorDisplay.value = numbers;
+                    } else {
+                        showCustomAlert('ไม่พบตัวเลขในรูปภาพ กรุณาลองใหม่อีกครั้ง');
+                    }
+                } catch (error) {
+                    console.error('OCR Error:', error);
+                    showCustomAlert('เกิดข้อผิดพลาดในการสแกนรูปภาพ');
+                } finally {
+                    processingModal.hide();
+                    event.target.value = ''; // Reset file input
+                }
+            };
+
+            ocrFileInput.addEventListener('change', handleOcrImage);
+            ocrCameraInput.addEventListener('change', handleOcrImage);
         });
     </script>
 </body>
