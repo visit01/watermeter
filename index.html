@@ -69,7 +69,7 @@
         }
 
         /* Hide the default file input */
-        #ocr-file-input, #ocr-file-input-camera {
+        #ocr-file-input, #meter-photo-input {
             display: none;
         }
         
@@ -86,7 +86,7 @@
         <!-- Header with Logo -->
         <div class="header">
             <div class="logo">
-                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-droplet-fill" viewBox="0 B 16 16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-droplet-fill" viewBox="0 0 16 16">
                     <path d="M8 16a6 6 0 0 0 6-6c0-1.655-1.122-2.904-2.432-4.362C10.254 4.176 8.75 2.503 8 0 7.25 2.503 5.746 4.176 4.432 5.638 3.122 7.096 2 8.345 2 10a6 6 0 0 0 6 6"/>
                 </svg>
             </div>
@@ -151,10 +151,17 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="card-footer text-center">
-                     <button id="record-btn" class="btn btn-success btn-lg w-100">
+                <div class="card-footer text-center p-3">
+                     <button id="record-btn" class="btn btn-success btn-lg w-100 mb-3">
                         <i class="bi bi-pencil-square"></i> บันทึกเลขมิเตอร์น้ำ
                     </button>
+                    <div id="photo-section">
+                        <label for="meter-photo-input" class="btn btn-info w-100">
+                            <i class="bi bi-camera-fill"></i> ถ่ายรูปมิเตอร์น้ำ
+                        </label>
+                        <input type="file" id="meter-photo-input" accept="image/*" capture="camera">
+                        <p id="photo-status" class="text-muted mt-2 mb-0">ยังไม่ได้ถ่ายรูป</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -179,6 +186,17 @@
                             <tr>
                                 <th>หน่วยน้ำที่ใช้</th>
                                 <td id="usage" class="fw-bold text-primary fs-5"></td>
+                            </tr>
+                             <tr>
+                                <th>พิกัดมิเตอร์น้ำ</th>
+                                <td id="meter-gps">กำลังค้นหา...</td>
+                            </tr>
+                            <tr>
+                                <th>รูปมิเตอร์น้ำ</th>
+                                <td>
+                                    <img id="meter-photo-thumbnail" src="" class="img-thumbnail" style="max-width: 100px; display: none;">
+                                    <span id="no-photo-text">ไม่ได้ถ่ายรูป</span>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -297,13 +315,19 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Screen elements
+            // --- State Variables ---
+            let meterPhotoBase64 = null;
+            let meterCoordinates = null;
+            let cropper;
+            let html5QrCode;
+
+            // --- Screen elements ---
             const initialScreen = document.getElementById('initial-screen');
             const scannerContainer = document.getElementById('scanner-container');
             const userInfoScreen = document.getElementById('user-info-screen');
             const resultScreen = document.getElementById('result-screen');
 
-            // Buttons
+            // --- Buttons ---
             const scanBtn = document.getElementById('scan-btn');
             const closeScannerBtn = document.getElementById('close-scanner-btn');
             const manualSubmitBtn = document.getElementById('manual-submit-btn');
@@ -314,31 +338,31 @@
             const resetBtn = document.getElementById('reset-btn');
             const cropBtn = document.getElementById('crop-btn');
             const voiceInputBtn = document.getElementById('voice-input-btn');
-
-            // Modals
+            
+            // --- Modals ---
             const calculatorModal = new bootstrap.Modal(document.getElementById('calculatorModal'));
             const alertModal = new bootstrap.Modal(document.getElementById('alertModal'));
             const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
             const cropModal = new bootstrap.Modal(document.getElementById('cropModal'));
             const cropModalEl = document.getElementById('cropModal');
             
-            // Calculator elements
+            // --- Calculator elements ---
             const calculatorDisplay = document.getElementById('calculator-display');
             const calcDeleteBtn = document.getElementById('calc-delete');
 
-            // OCR & Cropper elements
+            // --- OCR, Photo & GPS elements ---
             const ocrFileInput = document.getElementById('ocr-file-input');
-            const ocrCameraInput = document.getElementById('ocr-file-input-camera');
             const ocrStatus = document.getElementById('ocr-status');
             const imageToCrop = document.getElementById('image-to-crop');
-            let cropper;
-            let html5QrCode;
+            const meterPhotoInput = document.getElementById('meter-photo-input');
+            const photoStatus = document.getElementById('photo-status');
+            const meterGpsEl = document.getElementById('meter-gps');
+            const meterPhotoThumbnailEl = document.getElementById('meter-photo-thumbnail');
+            const noPhotoTextEl = document.getElementById('no-photo-text');
 
             // --- QR Code Scanner Logic ---
             const onScanSuccess = (decodedText, decodedResult) => {
-                // Basic validation for 11-digit number
                 if (/^\d{11}$/.test(decodedText)) {
-                    console.log(`Scan result: ${decodedText}`, decodedResult);
                     stopScanner();
                     processMeterId(decodedText);
                 }
@@ -353,7 +377,6 @@
                     { fps: 10, qrbox: { width: 250, height: 250 } },
                     onScanSuccess
                 ).catch(err => {
-                    console.error("Unable to start scanning.", err);
                     document.getElementById('alert-message').textContent = 'ไม่สามารถเปิดกล้องได้ กรุณาตรวจสอบการอนุญาต';
                     alertModal.show();
                     showScreen('initial');
@@ -362,11 +385,7 @@
 
             const stopScanner = () => {
                  if (html5QrCode && html5QrCode.isScanning) {
-                    html5QrCode.stop().then(() => {
-                        console.log("QR Code scanning stopped.");
-                    }).catch(err => {
-                        console.error("Failed to stop QR Code scanning.", err);
-                    });
+                    html5QrCode.stop().catch(err => console.error("Failed to stop QR Code scanning.", err));
                 }
                 scannerContainer.style.display = 'none';
             };
@@ -376,7 +395,6 @@
                 stopScanner();
                 showScreen('initial');
             });
-
 
             // --- Manual Input Logic ---
             manualSubmitBtn.addEventListener('click', () => {
@@ -430,7 +448,7 @@
             });
             
             // --- OCR & Cropper Logic ---
-            const handleFileSelect = (file) => {
+            const handleFileSelectForOcr = (file) => {
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
@@ -441,56 +459,30 @@
                 }
             };
 
-            ocrFileInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0]));
-            if(ocrCameraInput) {
-                ocrCameraInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0]));
-            }
-
+            ocrFileInput.addEventListener('change', (e) => handleFileSelectForOcr(e.target.files[0]));
 
             cropModalEl.addEventListener('shown.bs.modal', () => {
-                cropper = new Cropper(imageToCrop, {
-                    viewMode: 1,
-                    dragMode: 'move',
-                    aspectRatio: NaN, // Free crop
-                    autoCropArea: 0.8,
-                });
+                cropper = new Cropper(imageToCrop, { viewMode: 1, dragMode: 'move', aspectRatio: NaN, autoCropArea: 0.8 });
             });
 
-            cropModalEl.addEventListener('hidden.bs.modal', () => {
-                if (cropper) {
-                    cropper.destroy();
-                    cropper = null;
-                }
-            });
+            cropModalEl.addEventListener('hidden.bs.modal', () => cropper?.destroy());
 
             cropBtn.addEventListener('click', () => {
                 if (cropper) {
                     ocrStatus.textContent = 'กำลังประมวลผล...';
-                    calculatorModal.show(); // Show calculator modal to see the status
+                    calculatorModal.show();
                     cropModal.hide();
-
-                    const canvas = cropper.getCroppedCanvas();
-                    canvas.toBlob((blob) => {
-                        processOcr(blob);
-                    });
+                    cropper.getCroppedCanvas().toBlob(processOcr);
                 }
             });
 
             const processOcr = (file) => {
                 if (!file) return;
-
-                Tesseract.recognize(
-                    file,
-                    'eng',
-                    { logger: m => console.log(m) }
-                ).then(({ data: { text } }) => {
+                Tesseract.recognize(file, 'eng', { logger: m => console.log(m) })
+                .then(({ data: { text } }) => {
                     const numbers = text.replace(/\D/g, '');
-                    if(numbers) {
-                        calculatorDisplay.textContent = numbers;
-                        ocrStatus.textContent = 'OCR สำเร็จ!';
-                    } else {
-                        ocrStatus.textContent = 'ไม่พบตัวเลขในภาพ';
-                    }
+                    calculatorDisplay.textContent = numbers || '';
+                    ocrStatus.textContent = numbers ? 'OCR สำเร็จ!' : 'ไม่พบตัวเลขในภาพ';
                     setTimeout(() => ocrStatus.textContent = 'หรือ', 3000);
                 }).catch(err => {
                     console.error(err);
@@ -501,68 +493,108 @@
 
             // --- Voice Input Logic ---
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
             if (SpeechRecognition) {
                 voiceInputBtn.addEventListener('click', () => {
                     const recognition = new SpeechRecognition();
-                    recognition.lang = 'th-TH'; // Set language to Thai
-                    recognition.interimResults = false;
-                    recognition.maxAlternatives = 1;
-
+                    recognition.lang = 'th-TH';
                     recognition.onstart = () => {
                         ocrStatus.textContent = 'กำลังฟัง...';
                         voiceInputBtn.classList.add('disabled', 'btn-danger');
-                        voiceInputBtn.classList.remove('btn-outline-success');
                     };
-
                     recognition.onend = () => {
                         ocrStatus.textContent = 'หรือ';
                         voiceInputBtn.classList.remove('disabled', 'btn-danger');
-                        voiceInputBtn.classList.add('btn-outline-success');
                     };
-
-                    recognition.onerror = (event) => {
-                        console.error('Speech recognition error', event.error);
-                        ocrStatus.textContent = 'เกิดข้อผิดพลาด';
-                    };
-
-                    recognition.onresult = (event) => {
-                        const speechResult = event.results[0][0].transcript;
-                        const numbers = speechResult.replace(/\s+/g, '').replace(/\D/g, '');
-
-                        if (numbers) {
-                            calculatorDisplay.textContent = numbers;
-                            ocrStatus.textContent = 'รับเสียงสำเร็จ!';
-                        } else {
-                            ocrStatus.textContent = 'ไม่พบตัวเลข';
-                        }
+                    recognition.onerror = (e) => console.error('Speech recognition error', e.error);
+                    recognition.onresult = (e) => {
+                        const numbers = e.results[0][0].transcript.replace(/\s+/g, '').replace(/\D/g, '');
+                        calculatorDisplay.textContent = numbers;
+                        ocrStatus.textContent = numbers ? 'รับเสียงสำเร็จ!' : 'ไม่พบตัวเลข';
                         setTimeout(() => ocrStatus.textContent = 'หรือ', 3000);
                     };
-
                     recognition.start();
                 });
             } else {
-                console.log("Speech Recognition not supported");
                 voiceInputBtn.style.display = 'none'; 
                 ocrStatus.textContent = 'ใช้ OCR อ่านค่า';
+            }
+            
+            // --- Meter Photo & GPS Logic ---
+            meterPhotoInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    photoStatus.innerHTML = 'กำลังบีบอัดรูป... <div class="spinner-border spinner-border-sm" role="status"></div>';
+                    compressAndEncodeImage(file);
+                }
+            });
+
+            function compressAndEncodeImage(file) {
+                const MAX_WIDTH = 1024; // Max width for resizing
+                const TARGET_SIZE_KB = 100; // Target size in KB
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        const scale = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scale;
+                        
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                        let quality = 0.9;
+                        let dataUrl;
+                        do {
+                            dataUrl = canvas.toDataURL('image/jpeg', quality);
+                            // Base64 string size is roughly 4/3 of the original data size.
+                            const sizeKB = (dataUrl.length * (3/4)) / 1024;
+                            if (sizeKB <= TARGET_SIZE_KB) {
+                                break;
+                            }
+                            quality -= 0.1;
+                        } while (quality > 0.1);
+                        
+                        meterPhotoBase64 = dataUrl;
+                        photoStatus.innerHTML = `ถ่ายรูปแล้ว <i class="bi bi-check-circle-fill text-success"></i>`;
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function getGpsLocation() {
+                return new Promise((resolve, reject) => {
+                    if (!navigator.geolocation) {
+                        reject('Geolocation is not supported by your browser');
+                        return;
+                    }
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const coords = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+                            resolve(coords);
+                        },
+                        () => {
+                            reject('Unable to retrieve your location');
+                        }
+                    );
+                });
             }
 
 
             // --- Save and Validation Logic ---
             saveReadingBtn.addEventListener('click', () => {
                 const currentValue = parseInt(calculatorDisplay.textContent, 10);
-                const lastValue = 1562;
-
                 if (isNaN(currentValue) || calculatorDisplay.textContent.trim() === '') {
                     document.getElementById('alert-message').textContent = 'กรุณาป้อนข้อมูลให้ถูกต้อง';
                     alertModal.show();
                     return;
                 }
-                
-                const usage = currentValue - lastValue;
-
+                const usage = currentValue - 1562;
                 if (usage < 50) {
-                     document.getElementById('alert-message').textContent = 'หน่วยใช้น้ำน้อยกว่า 50 กรุณาเช็คข้อมูลอีกครั้ง!';
+                     document.getElementById('alert-message').textContent = `หน่วยใช้น้ำ (${usage}) น้อยกว่า 50 กรุณาเช็คข้อมูลอีกครั้ง!`;
                     alertModal.show();
                 } else {
                     confirmModal.show();
@@ -574,22 +606,56 @@
                 calculatorDisplay.textContent = '';
             });
 
-            confirmOkBtn.addEventListener('click', () => {
+            confirmOkBtn.addEventListener('click', async () => {
                 confirmModal.hide();
                 calculatorModal.hide();
+                
+                showScreen('result'); // Show result screen immediately
 
+                // Fetch GPS
+                try {
+                    meterCoordinates = await getGpsLocation();
+                    meterGpsEl.textContent = meterCoordinates;
+                } catch (error) {
+                    meterGpsEl.textContent = `ผิดพลาด: ${error}`;
+                    meterCoordinates = `ผิดพลาด: ${error}`;
+                }
+
+                // Prepare final data
                 const currentValue = parseInt(calculatorDisplay.textContent, 10);
                 const lastValue = 1562;
                 const usage = currentValue - lastValue;
 
                 const today = new Date();
-                document.getElementById('current-date').textContent = today.toLocaleDateString('th-TH', {
+                const formattedToday = today.toLocaleDateString('th-TH', {
                     year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
                 });
+
+                // Update UI
+                document.getElementById('current-date').textContent = formattedToday;
                 document.getElementById('current-reading').textContent = currentValue;
                 document.getElementById('usage').textContent = `${usage} หน่วย`;
 
-                showScreen('result');
+                if (meterPhotoBase64) {
+                    meterPhotoThumbnailEl.src = meterPhotoBase64;
+                    meterPhotoThumbnailEl.style.display = 'block';
+                    noPhotoTextEl.style.display = 'none';
+                } else {
+                    meterPhotoThumbnailEl.style.display = 'none';
+                    noPhotoTextEl.style.display = 'block';
+                }
+
+                // Print result data to console as JSON
+                const resultData = {
+                    "หมายเลขมิเตอร์น้ำ": document.getElementById('meter-id').textContent,
+                    "วันที่จดวันนี้": formattedToday,
+                    "เลขมิเตอร์วันนี้": currentValue,
+                    "หน่วยน้ำที่ใช้": usage,
+                    "พิกัดมิเตอร์น้ำ": meterCoordinates,
+                    "ถ่ายรูปมิเตอร์น้ำ": meterPhotoBase64
+                };
+                console.log(JSON.stringify(resultData, null, 2));
+
             });
             
             // --- Reset Logic ---
