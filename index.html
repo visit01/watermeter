@@ -585,22 +585,22 @@
                 const newRowsHTML = `
                     <tr class="result-row">
                         <th>วันที่จดวันนี้</th>
-                        <td id="current-date">${formattedToday}</td>
+                        <td id="current-date" class="text-primary">${formattedToday}</td>
                     </tr>
                     <tr class="result-row">
                         <th>เลขมิเตอร์วันนี้</th>
-                        <td id="current-reading">${currentValue}</td>
+                        <td id="current-reading" class="text-primary">${currentValue}</td>
                     </tr>
                     <tr class="result-row">
                         <th>รูปมิเตอร์น้ำ</th>
-                        <td>
+                        <td class="text-primary">
                             <img id="meter-photo-thumbnail" src="${meterPhotoBase64 || ''}" class="img-thumbnail" style="max-width: 100px; display: ${meterPhotoBase64 ? 'block' : 'none'};">
                             <span id="no-photo-text" style="display: ${meterPhotoBase64 ? 'none' : 'block'};">ไม่ได้ถ่ายรูป</span>
                         </td>
                     </tr>
                     <tr class="result-row">
                         <th>พิกัดสถานที่</th>
-                        <td id="location-gps">${locationCoordinates ? `${locationCoordinates.lat}, ${locationCoordinates.long}` : 'ไม่มีข้อมูล'}</td>
+                        <td id="location-gps" class="text-primary">${locationCoordinates ? `${locationCoordinates.lat}, ${locationCoordinates.long}` : 'ไม่มีข้อมูล'}</td>
                     </tr>
                     <tr class="result-row">
                         <th>หน่วยน้ำที่ใช้</th>
