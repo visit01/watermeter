@@ -581,34 +581,38 @@
                 recordBtn.style.display = 'none';
                 resetBtn.style.display = 'block';
 
-                // Create json (data1)
+                // Create json (data1) in English
                 const data1 = {
-                    "หมายเลขมิเตอร์น้ำ": document.getElementById('meter-id').textContent,
-                    "วันที่จดวันนี้": timestamp,
-                    "เลขมิเตอร์วันนี้": currentValue,
-                    "หน่วยน้ำที่ใช้": usage
+                    "meter_id": document.getElementById('meter-id').textContent,
+                    "timestamp": timestamp,
+                    "current_reading": currentValue,
+                    "usage": usage,
+                    "meter_photo_base64": meterPhotoBase64
                 };
                 
                 // Print json (data1) in console
                 console.log("--- JSON Data (data1) to be Sent ---");
                 console.log(JSON.stringify(data1, null, 2));
 
-                // Create datajson = base64 of data1
-                const datajson = btoa(unescape(encodeURIComponent(JSON.stringify(data1))));
+                // Send json (data1) to URL via POST Method
+                const targetUrl = 'https://saijai.tech:8443/watermeter';
                 
-                // Send datajson to URL via GET Method
-                const targetUrl = 'http://128.199.172.248:1880/watermeter';
-                const urlWithParams = `${targetUrl}?dapi=${datajson}`;
-                
-                fetch(urlWithParams, { 
-                    method: 'GET' 
+                fetch(targetUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data1)
                 })
                 .then(response => {
+                    if (response.status === 404) {
+                        throw new Error(`Endpoint not found (404)`);
+                    }
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     console.log('Server response received.');
-                    return response.text(); 
+                    return response.text();
                 })
                 .then(data => {
                     console.log('Response from server:', data);
@@ -616,8 +620,10 @@
                 .catch(error => {
                     console.error('There was a problem with the fetch operation:', error);
                     let userMessage = 'ส่งข้อมูลไปยังเซิร์ฟเวอร์ไม่สำเร็จ!';
-                    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-                        userMessage += ' อาจเกิดจากปัญหาเครือข่าย, นโยบายความปลอดภัย (CORS), หรือการเชื่อมต่อเซิร์ฟเวอร์ (Mixed Content)';
+                    if (error.message.includes('404')) {
+                        userMessage = 'ส่งข้อมูลไม่สำเร็จ: ไม่พบ URL ปลายทาง (404)';
+                    } else if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                        userMessage += ' อาจเกิดจากปัญหาเครือข่าย, นโยบายความปลอดภัย (CORS), หรือการเชื่อมต่อเซิร์ฟเวอร์ไม่ถูกต้อง';
                     }
                     document.getElementById('alert-message').textContent = userMessage;
                     alertModal.show();
