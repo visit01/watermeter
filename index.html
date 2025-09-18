@@ -586,8 +586,7 @@
                     "หมายเลขมิเตอร์น้ำ": document.getElementById('meter-id').textContent,
                     "วันที่จดวันนี้": timestamp,
                     "เลขมิเตอร์วันนี้": currentValue,
-                    "หน่วยน้ำที่ใช้": usage,
-                    "รูปมิเตอร์น้ำ": meterPhotoBase64
+                    "หน่วยน้ำที่ใช้": usage
                 };
                 
                 // Print json (data1) in console
@@ -599,21 +598,28 @@
                 
                 fetch(targetUrl, {
                     method: 'POST',
-                    mode: 'no-cors', // Use 'no-cors' to allow sending data to an http endpoint from a secure context
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(data1)
                 })
-                .then(() => {
-                    // NOTE: With 'no-cors', we cannot read the server's response.
-                    // This block executes if the request was successfully dispatched by the browser.
-                    console.log('Request to server has been sent.');
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    console.log('Server response received.');
+                    return response.text();
+                })
+                .then(data => {
+                    console.log('Response from server:', data);
                 })
                 .catch(error => {
-                    // This will typically catch network errors (e.g., server is down), not CORS/response errors.
                     console.error('There was a problem with the fetch operation:', error);
-                    document.getElementById('alert-message').textContent = 'ส่งข้อมูลไปยังเซิร์ฟเวอร์ไม่สำเร็จ!';
+                    let userMessage = 'ส่งข้อมูลไปยังเซิร์ฟเวอร์ไม่สำเร็จ!';
+                    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                        userMessage += ' อาจเกิดจากปัญหาเครือข่าย, นโยบายความปลอดภัย (CORS), หรือการเชื่อมต่อเซิร์ฟเวอร์ (Mixed Content)';
+                    }
+                    document.getElementById('alert-message').textContent = userMessage;
                     alertModal.show();
                 });
 
