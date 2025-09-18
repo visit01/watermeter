@@ -589,31 +589,34 @@
                     "หน่วยน้ำที่ใช้": usage,
                     "รูปมิเตอร์น้ำ": meterPhotoBase64
                 };
-
-                // Send json (data1) to URL via GET Method
-                const targetUrl = 'http://128.199.172.248:1880/watermeter';
-                const urlWithParams = `${targetUrl}?data=${encodeURIComponent(JSON.stringify(data1))}`;
-
-                fetch(urlWithParams, { method: 'GET' })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        console.log('Server response received.');
-                        return response.text(); 
-                    })
-                    .then(data => {
-                        console.log('Response from server:', data);
-                    })
-                    .catch(error => {
-                        console.error('There was a problem with the fetch operation:', error);
-                        document.getElementById('alert-message').textContent = 'ส่งข้อมูลไปยังเซิร์ฟเวอร์ไม่สำเร็จ!';
-                        alertModal.show();
-                    });
-
+                
                 // Print json (data1) in console
-                console.log("--- JSON Data (data1) Sent to Server ---");
+                console.log("--- JSON Data (data1) to be Sent ---");
                 console.log(JSON.stringify(data1, null, 2));
+
+                // Send json (data1) to URL via POST Method
+                const targetUrl = 'http://128.199.172.248:1880/watermeter';
+                
+                fetch(targetUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', // Use 'no-cors' to allow sending data to an http endpoint from a secure context
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data1)
+                })
+                .then(() => {
+                    // NOTE: With 'no-cors', we cannot read the server's response.
+                    // This block executes if the request was successfully dispatched by the browser.
+                    console.log('Request to server has been sent.');
+                })
+                .catch(error => {
+                    // This will typically catch network errors (e.g., server is down), not CORS/response errors.
+                    console.error('There was a problem with the fetch operation:', error);
+                    document.getElementById('alert-message').textContent = 'ส่งข้อมูลไปยังเซิร์ฟเวอร์ไม่สำเร็จ!';
+                    alertModal.show();
+                });
+
             });
             
             // --- Reset Logic ---
