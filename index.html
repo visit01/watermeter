@@ -86,7 +86,7 @@
         <!-- Header with Logo -->
         <div class="header">
             <div class="logo">
-                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-droplet-fill" viewBox="0 0 16 16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-droplet-fill" viewBox="0 B 16 16">
                     <path d="M8 16a6 6 0 0 0 6-6c0-1.655-1.122-2.904-2.432-4.362C10.254 4.176 8.75 2.503 8 0 7.25 2.503 5.746 4.176 4.432 5.638 3.122 7.096 2 8.345 2 10a6 6 0 0 0 6 6"/>
                 </svg>
             </div>
@@ -207,11 +207,10 @@
                             <i class="bi bi-file-earmark-image"></i> เลือกรูป
                         </label>
                         <input type="file" id="ocr-file-input" accept="image/*">
-                        <p id="ocr-status" class="mb-0 text-center flex-grow-1">หรือใช้ OCR อ่านค่า</p>
-                        <label for="ocr-file-input-camera" class="btn btn-outline-info">
-                            <i class="bi bi-camera-fill"></i> ถ่ายรูป
-                        </label>
-                         <input type="file" id="ocr-file-input-camera" accept="image/*" capture="camera">
+                        <p id="ocr-status" class="mb-0 text-center flex-grow-1">หรือ</p>
+                        <button id="voice-input-btn" class="btn btn-outline-success">
+                            <i class="bi bi-mic-fill"></i> ป้อนด้วยเสียง
+                        </button>
                     </div>
                     <div class="calculator">
                         <div class="row g-2">
@@ -314,6 +313,7 @@
             const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
             const resetBtn = document.getElementById('reset-btn');
             const cropBtn = document.getElementById('crop-btn');
+            const voiceInputBtn = document.getElementById('voice-input-btn');
 
             // Modals
             const calculatorModal = new bootstrap.Modal(document.getElementById('calculatorModal'));
@@ -442,7 +442,10 @@
             };
 
             ocrFileInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0]));
-            ocrCameraInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0]));
+            if(ocrCameraInput) {
+                ocrCameraInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0]));
+            }
+
 
             cropModalEl.addEventListener('shown.bs.modal', () => {
                 cropper = new Cropper(imageToCrop, {
@@ -488,13 +491,61 @@
                     } else {
                         ocrStatus.textContent = 'ไม่พบตัวเลขในภาพ';
                     }
-                    setTimeout(() => ocrStatus.textContent = 'หรือใช้ OCR อ่านค่า', 3000);
+                    setTimeout(() => ocrStatus.textContent = 'หรือ', 3000);
                 }).catch(err => {
                     console.error(err);
                     ocrStatus.textContent = 'OCR ผิดพลาด';
-                    setTimeout(() => ocrStatus.textContent = 'หรือใช้ OCR อ่านค่า', 3000);
+                    setTimeout(() => ocrStatus.textContent = 'หรือ', 3000);
                 });
             };
+
+            // --- Voice Input Logic ---
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            if (SpeechRecognition) {
+                voiceInputBtn.addEventListener('click', () => {
+                    const recognition = new SpeechRecognition();
+                    recognition.lang = 'th-TH'; // Set language to Thai
+                    recognition.interimResults = false;
+                    recognition.maxAlternatives = 1;
+
+                    recognition.onstart = () => {
+                        ocrStatus.textContent = 'กำลังฟัง...';
+                        voiceInputBtn.classList.add('disabled', 'btn-danger');
+                        voiceInputBtn.classList.remove('btn-outline-success');
+                    };
+
+                    recognition.onend = () => {
+                        ocrStatus.textContent = 'หรือ';
+                        voiceInputBtn.classList.remove('disabled', 'btn-danger');
+                        voiceInputBtn.classList.add('btn-outline-success');
+                    };
+
+                    recognition.onerror = (event) => {
+                        console.error('Speech recognition error', event.error);
+                        ocrStatus.textContent = 'เกิดข้อผิดพลาด';
+                    };
+
+                    recognition.onresult = (event) => {
+                        const speechResult = event.results[0][0].transcript;
+                        const numbers = speechResult.replace(/\s+/g, '').replace(/\D/g, '');
+
+                        if (numbers) {
+                            calculatorDisplay.textContent = numbers;
+                            ocrStatus.textContent = 'รับเสียงสำเร็จ!';
+                        } else {
+                            ocrStatus.textContent = 'ไม่พบตัวเลข';
+                        }
+                        setTimeout(() => ocrStatus.textContent = 'หรือ', 3000);
+                    };
+
+                    recognition.start();
+                });
+            } else {
+                console.log("Speech Recognition not supported");
+                voiceInputBtn.style.display = 'none'; 
+                ocrStatus.textContent = 'ใช้ OCR อ่านค่า';
+            }
 
 
             // --- Save and Validation Logic ---
