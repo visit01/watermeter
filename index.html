@@ -119,11 +119,11 @@
         <div id="user-info-screen" style="display: none;">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-person-circle"></i> ข้อมูลผู้ใช้น้ำ</h5>
+                    <h5 class="mb-0"><i class="bi bi-person-circle"></i> ตารางข้อมูลของผู้ใช้น้ำ</h5>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-bordered mb-0">
-                        <tbody>
+                        <tbody id="user-info-table-body">
                             <tr>
                                 <th class="w-50">หมายเลขมิเตอร์น้ำ</th>
                                 <td id="meter-id"></td>
@@ -155,54 +155,15 @@
                      <button id="record-btn" class="btn btn-success btn-lg w-100">
                         <i class="bi bi-pencil-square"></i> บันทึกเลขมิเตอร์น้ำ
                     </button>
+                    <button id="reset-btn" class="btn btn-warning btn-lg w-100" style="display: none;">
+                        <i class="bi bi-arrow-repeat"></i> ล้างข้อมูลและเริ่มใหม่
+                    </button>
                      <!-- Hidden input for meter photo, triggered by the record button -->
                     <input type="file" id="meter-photo-input" accept="image/*" capture="camera">
                 </div>
             </div>
         </div>
 
-        <!-- 3. Final Result Screen (hidden by default) -->
-        <div id="result-screen" style="display: none;">
-            <div class="card bg-info-subtle border-primary">
-                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-check-circle-fill"></i> บันทึกข้อมูลสำเร็จ</h5>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-bordered mb-0">
-                        <tbody>
-                            <tr>
-                                <th class="w-50">วันที่จดวันนี้</th>
-                                <td id="current-date"></td>
-                            </tr>
-                            <tr>
-                                <th>เลขมิเตอร์วันนี้</th>
-                                <td id="current-reading"></td>
-                            </tr>
-                             <tr>
-                                <th>รูปมิเตอร์น้ำ</th>
-                                <td>
-                                    <img id="meter-photo-thumbnail" src="" class="img-thumbnail" style="max-width: 100px; display: none;">
-                                    <span id="no-photo-text">ไม่ได้ถ่ายรูป</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>พิกัดสถานที่</th>
-                                <td id="location-gps">กำลังค้นหา...</td>
-                            </tr>
-                            <tr>
-                                <th>หน่วยน้ำที่ใช้</th>
-                                <td id="usage" class="fw-bold text-primary fs-5"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                 <div class="card-footer text-center">
-                    <button id="reset-btn" class="btn btn-warning btn-lg w-100">
-                        <i class="bi bi-arrow-repeat"></i> ล้างข้อมูลและเริ่มใหม่
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Calculator Modal -->
@@ -320,8 +281,7 @@
             const initialScreen = document.getElementById('initial-screen');
             const scannerContainer = document.getElementById('scanner-container');
             const userInfoScreen = document.getElementById('user-info-screen');
-            const resultScreen = document.getElementById('result-screen');
-
+            
             // --- Buttons ---
             const scanBtn = document.getElementById('scan-btn');
             const closeScannerBtn = document.getElementById('close-scanner-btn');
@@ -350,10 +310,7 @@
             const ocrStatus = document.getElementById('ocr-status');
             const imageToCrop = document.getElementById('image-to-crop');
             const meterPhotoInput = document.getElementById('meter-photo-input');
-            const locationGpsEl = document.getElementById('location-gps');
-            const meterPhotoThumbnailEl = document.getElementById('meter-photo-thumbnail');
-            const noPhotoTextEl = document.getElementById('no-photo-text');
-
+            
             // --- QR Code Scanner Logic ---
             const onScanSuccess = (decodedText, decodedResult) => {
                 if (/^\d{11}$/.test(decodedText)) {
@@ -415,12 +372,10 @@
             const showScreen = (screenName) => {
                 initialScreen.style.display = 'none';
                 userInfoScreen.style.display = 'none';
-                resultScreen.style.display = 'none';
                 scannerContainer.style.display = 'none';
 
                 if (screenName === 'initial') initialScreen.style.display = 'block';
                 if (screenName === 'userInfo') userInfoScreen.style.display = 'block';
-                if (screenName === 'result') resultScreen.style.display = 'block';
             };
             
             // --- NEW RECORDING FLOW ---
@@ -615,8 +570,6 @@
                 confirmModal.hide();
                 calculatorModal.hide();
                 
-                showScreen('result'); 
-                
                 const currentValue = parseInt(calculatorDisplay.textContent, 10);
                 const lastValue = 1562;
                 const usage = currentValue - lastValue;
@@ -627,20 +580,41 @@
                     year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
                 });
 
-                // Update UI
-                document.getElementById('current-date').textContent = formattedToday;
-                document.getElementById('current-reading').textContent = currentValue;
-                document.getElementById('usage').textContent = `${usage} หน่วย`;
-                locationGpsEl.textContent = locationCoordinates ? `${locationCoordinates.lat}, ${locationCoordinates.long}` : 'ไม่มีข้อมูล';
+                // --- UPDATE UI LOGIC ---
+                const userInfoTableBody = document.getElementById('user-info-table-body');
+                const newRowsHTML = `
+                    <tr class="result-row">
+                        <th>วันที่จดวันนี้</th>
+                        <td id="current-date">${formattedToday}</td>
+                    </tr>
+                    <tr class="result-row">
+                        <th>เลขมิเตอร์วันนี้</th>
+                        <td id="current-reading">${currentValue}</td>
+                    </tr>
+                    <tr class="result-row">
+                        <th>รูปมิเตอร์น้ำ</th>
+                        <td>
+                            <img id="meter-photo-thumbnail" src="${meterPhotoBase64 || ''}" class="img-thumbnail" style="max-width: 100px; display: ${meterPhotoBase64 ? 'block' : 'none'};">
+                            <span id="no-photo-text" style="display: ${meterPhotoBase64 ? 'none' : 'block'};">ไม่ได้ถ่ายรูป</span>
+                        </td>
+                    </tr>
+                    <tr class="result-row">
+                        <th>พิกัดสถานที่</th>
+                        <td id="location-gps">${locationCoordinates ? `${locationCoordinates.lat}, ${locationCoordinates.long}` : 'ไม่มีข้อมูล'}</td>
+                    </tr>
+                    <tr class="result-row">
+                        <th>หน่วยน้ำที่ใช้</th>
+                        <td id="usage" class="fw-bold text-primary fs-5">${usage} หน่วย</td>
+                    </tr>
+                `;
+                userInfoTableBody.insertAdjacentHTML('beforeend', newRowsHTML);
 
-                if (meterPhotoBase64) {
-                    meterPhotoThumbnailEl.src = meterPhotoBase64;
-                    meterPhotoThumbnailEl.style.display = 'block';
-                    noPhotoTextEl.style.display = 'none';
-                } else {
-                    meterPhotoThumbnailEl.style.display = 'none';
-                    noPhotoTextEl.style.display = 'block';
-                }
+                // Change card style
+                userInfoScreen.querySelector('.card').classList.add('bg-info-subtle', 'border-primary');
+
+                // Toggle buttons
+                recordBtn.style.display = 'none';
+                resetBtn.style.display = 'block';
 
                 // Print result data to console as JSON
                 const resultData = {
